@@ -1,0 +1,6 @@
+pyautogui
+pytesseract
+pillow
+numpy
+opencv-python
+termcolor
