@@ -74,7 +74,7 @@ class Row:
             else:
                 percentage = f"{self.average_value/max_score * 100:8.2f}%"
 
-        cprint(f"{self.get_bar_string(self.average_value)} {self.role_name: >7}:{string_representation}{percentage}", get_text_color(self.average_value))
+        cprint(f"{self.get_bar_string(self.average_value)} {self.role_name: >11}:{string_representation}{percentage}", get_text_color(self.average_value))
         if more_data:
             print(output)
         return string_representation

@@ -3,14 +3,16 @@ from typing import Type
 
 from utils.config import DefaultConfig, elements_per_row
 from utils.gatherer import Gatherer, RoleGatherer
-from utils.image_to_text import image_to_int
+from utils.image_to_text import image_to_int, image_to_str
 from utils.role_config import RoleConfig, ColorParserRoleConfig, SaveRoleConfig, UseRoleConfig
-from utils.screenshot import Screenshotter, crop_from_config
+from utils.screenshot import Screenshotter, crop_from_config, crop_name_from_config
+from utils.team_gatherer import TeamData
 
 parser = argparse.ArgumentParser(description='Process command-line arguments.')
 parser.add_argument('-k', '--save-key', required=False, type=str, help='Key to save value', default=None)
 parser.add_argument('-r', '--save-role', required=False, type=str, help='Key to save config for a role', default=None)
 parser.add_argument('-u', '--use-role', required=False, type=str, help='Key to save config for a role', default=None)
+parser.add_argument('-t', '--gather-team', required=False, type=str, help='Key to save player data for best in role for a team', default=None)
 parser.add_argument('-o', '--old-data', action='store_true')
 parser.add_argument('-a', '--all-roles', action='store_true')
 parser.add_argument('-v', '--more-data', action='store_true')
@@ -19,8 +21,10 @@ args: argparse.Namespace = parser.parse_args()
 
 class MainProcessor:
     def __init__(self, screenshotter: Screenshotter, config: Type[DefaultConfig], args: argparse.Namespace):
+
         self.config: Type[DefaultConfig] = config
         self.screenshotter: Screenshotter = screenshotter
+        self.player_name = image_to_str(crop_name_from_config(DefaultConfig, screenshotter)).split(" ")[-1].capitalize()
 
         if not args.all_roles:
             self.gatherers = [Gatherer()]
@@ -55,14 +59,23 @@ class MainProcessor:
         return self.gatherers
 
 
+
+
 def main():
+    from colorama import init as colorama_init
+    colorama_init()
+
     main_processor = MainProcessor(Screenshotter(), DefaultConfig, args)
-    
+    team_data = TeamData(args.gather_team) if args.gather_team else None
+
     gatherers = main_processor.gather_data()
     max_score = -10000000000000
 
-    for i, gatherer in enumerate(gatherers):
+    for gatherer in gatherers:
         gatherer.compile_complete_data()
+        if team_data:
+            team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value)
+
         if gatherer.complete_data.average_value > max_score:
             max_score = gatherer.complete_data.average_value
 
@@ -70,13 +83,19 @@ def main():
         max_score = None
 
     prefix_previous = None
-    for i, gatherer in enumerate(gatherers):
+
+    for gatherer in gatherers:
         prefix_current = gatherer.role_name.split("_")[0]
         if prefix_previous and prefix_current != prefix_previous:
-            print("-" * 57)
+            print("-" * 63)
         gatherer.output(args, max_score)
         prefix_previous = prefix_current
-    print("-"*57)
+    print("-"*63)
+    if team_data:
+        team_data.save_config()
+
+        for position, players in team_data.current_team_config.items():
+            print(f"{position: <10}: {' | '.join([f'{player[0]}: {player[1]:6.2f}' for player in players.items()])}")
 
 
 if __name__ == '__main__':
