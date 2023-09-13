@@ -5,16 +5,13 @@ from typing import Union
 
 from PIL import Image
 
-from utils.config import elements_per_row
+from utils.config import elements_per_row, DefaultConfig
 
 ROLE_DATA_FILE = "role_data.json"
-COLORS = {
-    "key": (55, 68, 58),
-    "preferable": (50, 65, 80),
-}
+COLORS = DefaultConfig.role_relevance_colors
 
 
-def is_pixel_close(pixel: tuple[int, int, int], target_color: tuple[int, int, int], tolerance: int = 10) -> bool:
+def is_pixel_close(pixel: tuple[int, int, int], target_color: tuple[int, int, int], tolerance: int = 20) -> bool:
     r1, g1, b1 = pixel
     r2, g2, b2 = target_color
 
@@ -23,10 +20,14 @@ def is_pixel_close(pixel: tuple[int, int, int], target_color: tuple[int, int, in
 
 
 def match_color(image: Image.Image) -> Union[None, str]:
-    image_pixel = image.getpixel((1, 7))
+    image_pixel = get_relevant_pixel(image)
     for key, color in COLORS.items():
         if is_pixel_close(color, image_pixel):
             return key
+
+
+def get_relevant_pixel(image: Image.Image):
+    return image.getpixel((1, 7))
 
 
 class RoleConfig:

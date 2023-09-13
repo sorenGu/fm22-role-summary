@@ -2,6 +2,7 @@ import sys
 
 from utils.config import DefaultConfig
 from utils.image_to_text import image_to_int
+from utils.role_config import get_relevant_pixel
 from utils.screenshot import Screenshotter, crop_from_config
 
 
@@ -9,7 +10,7 @@ def parse_image(x, y, show_image=False):
     screenshotter = Screenshotter()
     image = crop_from_config(DefaultConfig, x, y, screenshotter)
     try:
-        print(y, image_to_int(image))
+        print(y, image_to_int(image), get_relevant_pixel(image))
     except Exception as e:
         print(f"failed to parse image {e}")
 
