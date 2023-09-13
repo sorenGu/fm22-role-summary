@@ -146,13 +146,12 @@ class Gatherer:
             json.dump(old_data, f)
 
     def get_old_data(self):
-        old_data = {"data": []}
-        with open("old_data.json", "r") as f:
-            try:
-                old_data = json.load(f)
-            except JSONDecodeError:
-                pass
-        return old_data
+        try:
+            with open("old_data.json", "r") as f:
+                return json.load(f)
+        except (JSONDecodeError, FileNotFoundError):
+            pass
+        return {"data": []}
 
 
 class RoleGatherer(Gatherer):

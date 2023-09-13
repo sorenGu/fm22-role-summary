@@ -1,12 +1,11 @@
 import argparse
-import random
 from typing import Type
 
 from utils.config import DefaultConfig, elements_per_row
 from utils.gatherer import Gatherer, RoleGatherer
 from utils.image_to_text import image_to_int
 from utils.role_config import RoleConfig, ColorParserRoleConfig, SaveRoleConfig, UseRoleConfig
-from utils.screenshot import Screenshotter
+from utils.screenshot import Screenshotter, crop_from_config
 
 parser = argparse.ArgumentParser(description='Process command-line arguments.')
 parser.add_argument('-k', '--save-key', required=False, type=str, help='Key to save value', default=None)
@@ -16,8 +15,6 @@ parser.add_argument('-o', '--old-data', action='store_true')
 parser.add_argument('-a', '--all-roles', action='store_true')
 parser.add_argument('-v', '--more-data', action='store_true')
 args: argparse.Namespace = parser.parse_args()
-
-
 
 
 class MainProcessor:
@@ -43,7 +40,7 @@ class MainProcessor:
 
         for row_i in range(3):
             for attribute_number in range(elements_per_row[row_i]):
-                image = self.crop_from_config(self.config, row_i, attribute_number, self.screenshotter)
+                image = crop_from_config(self.config, row_i, attribute_number, self.screenshotter)
                 importance = self.role_config.get_importance(image, row_i, attribute_number)
                 try:
                     # value = random.randrange(5,21)
@@ -56,17 +53,6 @@ class MainProcessor:
                     gatherer.add_to_row(row_i, attribute_number, importance, value)
         self.role_config.end()
         return self.gatherers
-
-    def crop_from_config(self, config, row_i, attribute_number, screenshotter):
-        row_start = config.rows_starts[row_i]
-        top_start = config.top + attribute_number * (config.height + config.height_between)
-        padding = 8
-        return screenshotter.get_crop(
-            [row_start,
-             top_start - padding,
-             row_start + config.width,
-             top_start + config.height + padding
-             ])
 
 
 def main():
@@ -83,10 +69,13 @@ def main():
     if len(gatherers) < 2:
         max_score = None
 
+    prefix_previous = None
     for i, gatherer in enumerate(gatherers):
-        if i != 0 and i % 3 == 0:
-            print("-"*57)
+        prefix_current = gatherer.role_name.split("_")[0]
+        if prefix_previous and prefix_current != prefix_previous:
+            print("-" * 57)
         gatherer.output(args, max_score)
+        prefix_previous = prefix_current
     print("-"*57)
 
 

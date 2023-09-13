@@ -31,12 +31,12 @@ def match_color(image: Image.Image) -> Union[None, str]:
 
 class RoleConfig:
     def read_config(self):
-        with open(ROLE_DATA_FILE, "r") as f:
-            try:
+        try:
+            with open(ROLE_DATA_FILE, "r") as f:
                 return json.load(f)
-            except JSONDecodeError as e:
-                print(f"failed to read config {e}")
-                return {}
+        except (JSONDecodeError, FileNotFoundError) as e:
+            print(f"failed to read config {e}")
+            return {}
 
     def get_importance(self, image, row_i, attribute_number):
         pass

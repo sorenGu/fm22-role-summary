@@ -24,3 +24,14 @@ class Screenshotter:
 
         return cropped_image
 
+
+def crop_from_config(config, row_i, attribute_number, screenshotter) -> Image.Image:
+    row_start = config.rows_starts[row_i]
+    top_start = config.top + attribute_number * (config.height + config.height_between)
+    padding = 8
+    return screenshotter.get_crop(
+        [row_start,
+         top_start - padding,
+         row_start + config.width,
+         top_start + config.height + padding
+         ])
