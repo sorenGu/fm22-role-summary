@@ -1,8 +1,10 @@
 import argparse
 import json
-from json import JSONDecodeError
-from termcolor import colored, cprint
 import os
+from json import JSONDecodeError
+
+from colorama import Fore, Style
+
 os.system('color')
 
 class Element:
@@ -26,22 +28,21 @@ class Element:
 
 
 def get_text_color(value):
-    for max_value, color in (
-        (0, "grey"),
-        (20, "light_grey"),
-        (25, "yellow"),
-        (30, "light_yellow"),
-        (35, "green"),
-        (40, "light_green"),
-        (45, "blue"),
-        (50, "light_blue"),
-        (55, "light_red"),
-        (60, "light_magenta")
+    for max_value, style in (
+            (0, (Fore.WHITE,)),
+            (20, (Fore.WHITE, Style.BRIGHT)),
+            (25, (Fore.RED,)),
+            (30, (Fore.RED, Style.BRIGHT)),
+            (35, (Fore.YELLOW,)),
+            (40, (Fore.YELLOW, Style.BRIGHT)),
+            (45, (Fore.GREEN,)),
+            (50, (Fore.GREEN, Style.BRIGHT)),
+            (55, (Fore.CYAN,)),
+            (60, (Fore.CYAN, Style.BRIGHT)),
     ):
-        colored(color, color)
         if max_value > value:
-            return color
-    return "light_cyan"
+            return "".join(str(x) for x in style)
+    return "".join(str(x) for x in (Fore.MAGENTA, Style.BRIGHT))
 
 class Row:
     def __init__(self, role_name="Overall"):
@@ -74,7 +75,7 @@ class Row:
             else:
                 percentage = f"{self.average_value/max_score * 100:8.2f}%"
 
-        cprint(f"{self.get_bar_string(self.average_value)} {self.role_name: >11}:{string_representation}{percentage}", get_text_color(self.average_value))
+        print(f"{self.get_bar_string(self.average_value)} {self.role_name: >11}:{get_text_color(self.average_value)}{string_representation}{percentage}{Style.RESET_ALL}")
         if more_data:
             print(output)
         return string_representation

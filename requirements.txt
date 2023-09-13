@@ -3,5 +3,4 @@ pytesseract
 pillow
 numpy
 opencv-python
-termcolor
 colorama

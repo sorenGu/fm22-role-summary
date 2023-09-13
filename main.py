@@ -93,9 +93,8 @@ def main():
     print("-"*63)
     if team_data:
         team_data.save_config()
+        team_data.output()
 
-        for position, players in team_data.current_team_config.items():
-            print(f"{position: <10}: {' | '.join([f'{player[0]}: {player[1]:6.2f}' for player in players.items()])}")
 
 
 if __name__ == '__main__':

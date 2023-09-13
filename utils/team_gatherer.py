@@ -1,6 +1,9 @@
 import json
 from json import JSONDecodeError
 
+from colorama import Style
+
+from utils.gatherer import get_text_color
 from utils.role_config import RoleConfig
 
 
@@ -39,3 +42,7 @@ class TeamData:
             for pair in
             sorted(self.current_team_config[position].items(), key=lambda x: x[1], reverse=True)[:5]
         }
+
+    def output(self):
+        for position, players in self.current_team_config.items():
+            print(f"{position: <10}: {' | '.join([f'{player[0]}: {get_text_color(player[1])}{player[1]:6.2f}{Style.RESET_ALL}' for player in players.items()])}")

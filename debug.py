@@ -2,7 +2,7 @@ import sys
 
 import colorama
 from PIL import Image
-from colorama import Fore
+from colorama import Fore, Style
 
 from utils.config import DefaultConfig
 from utils.image_to_text import image_to_int, image_to_str
@@ -47,6 +47,11 @@ def parse_name():
 
 
 if __name__ == "__main__":
+    from colorama import init as colorama_init
+    colorama_init()
+
+    print(f"{Fore.RED} red, {Fore.RED}{Style.BRIGHT} lightred {Style.RESET_ALL}")
+
     if len(sys.argv) == 1:
         parse_name()
     elif len(sys.argv) == 2:
