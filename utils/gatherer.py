@@ -45,13 +45,15 @@ def get_text_color(value):
     return "".join(str(x) for x in (Fore.MAGENTA, Style.BRIGHT))
 
 class Row:
+    percentage_of_max_score = None
+
     def __init__(self, role_name="Overall"):
         self.role_name = role_name
         self.average_value = None
         self.elements = {
             "key": Element(1.5),
             "preferable": Element(1),
-            None: Element(0.5),
+            None: Element(0.3),
         }
 
     def add(self, key, value):
@@ -63,17 +65,17 @@ class Row:
         for key, element in row.elements.items():
             self.elements[key].set(element)
 
-    def output(self, more_data=False, max_score=None):
+    def output(self, more_data=False):
         output = self.compile_average_value()
 
         string_representation = f"{self.average_value :6.2f}"
 
         percentage = ""
-        if max_score:
-            if max_score == self.average_value:
+        if self.percentage_of_max_score:
+            if self.percentage_of_max_score >= 99.9:
                 percentage = "    <★>"
             else:
-                percentage = f"{self.average_value/max_score * 100:8.2f}%"
+                percentage = f"{self.percentage_of_max_score:8.2f}%"
 
         print(f"{self.get_bar_string(self.average_value)} {self.role_name: >11}:{get_text_color(self.average_value)}{string_representation}{percentage}{Style.RESET_ALL}")
         if more_data:
@@ -110,9 +112,9 @@ class Gatherer:
         self.rows: tuple[Row, Row, Row] = (Row(), Row(), Row())
         self.complete_data: Row = None
 
-    def output(self, args: argparse.Namespace, max_score=None):
+    def output(self, args: argparse.Namespace):
         self.compile_complete_data()
-        self.complete_data = self.complete_data.output(max_score=max_score)
+        self.complete_data = self.complete_data.output()
 
         old_data = self.get_old_data()
         if args.old_data:

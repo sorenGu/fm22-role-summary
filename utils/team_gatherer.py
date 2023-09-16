@@ -1,7 +1,7 @@
 import json
 from json import JSONDecodeError
 
-from colorama import Style
+from colorama import Style, Fore, Back
 
 from utils.gatherer import get_text_color
 from utils.role_config import RoleConfig
@@ -40,9 +40,15 @@ class TeamData:
         self.current_team_config[position] = {
             pair[0]: pair[1]
             for pair in
-            sorted(self.current_team_config[position].items(), key=lambda x: x[1], reverse=True)[:5]
+            sorted(self.current_team_config[position].items(), key=lambda x: x[1], reverse=True)[:8]
         }
 
-    def output(self):
+    def output(self, current_player):
+        print(current_player)
         for position, players in self.current_team_config.items():
-            print(f"{position: <10}: {' | '.join([f'{player[0]}: {get_text_color(player[1])}{player[1]:6.2f}{Style.RESET_ALL}' for player in players.items()])}")
+            players_string = ' | '.join([
+                f'{player[0] if player[0] != current_player else f"{Back.LIGHTBLACK_EX}{Style.BRIGHT}{player[0]: <12}{Style.RESET_ALL}": <12}: '
+                f'{get_text_color(player[1])}{player[1]:6.2f}{Style.RESET_ALL}'
+                for player in players.items()
+            ])
+            print(f"{position: <10}- {players_string}")

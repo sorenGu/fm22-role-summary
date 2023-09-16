@@ -12,7 +12,8 @@ parser = argparse.ArgumentParser(description='Process command-line arguments.')
 parser.add_argument('-k', '--save-key', required=False, type=str, help='Key to save value', default=None)
 parser.add_argument('-r', '--save-role', required=False, type=str, help='Key to save config for a role', default=None)
 parser.add_argument('-u', '--use-role', required=False, type=str, help='Key to save config for a role', default=None)
-parser.add_argument('-t', '--gather-team', required=False, type=str, help='Key to save player data for best in role for a team', default=None)
+parser.add_argument('-t', '--gather-team', required=False, type=str, help='Key team to compare', default=None)
+parser.add_argument('-s', '--save-team', action='store_true')
 parser.add_argument('-o', '--old-data', action='store_true')
 parser.add_argument('-a', '--all-roles', action='store_true')
 parser.add_argument('-v', '--more-data', action='store_true')
@@ -73,8 +74,6 @@ def main():
 
     for gatherer in gatherers:
         gatherer.compile_complete_data()
-        if team_data:
-            team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value)
 
         if gatherer.complete_data.average_value > max_score:
             max_score = gatherer.complete_data.average_value
@@ -83,17 +82,24 @@ def main():
         max_score = None
 
     prefix_previous = None
-
+    print(main_processor.player_name)
     for gatherer in gatherers:
+        if max_score:
+            gatherer.complete_data.percentage_of_max_score = 100 * gatherer.complete_data.average_value / max_score
+            if team_data and gatherer.complete_data.percentage_of_max_score > 85:
+                team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value)
+
         prefix_current = gatherer.role_name.split("_")[0]
         if prefix_previous and prefix_current != prefix_previous:
             print("-" * 63)
-        gatherer.output(args, max_score)
+
+        gatherer.output(args)
         prefix_previous = prefix_current
     print("-"*63)
     if team_data:
-        team_data.save_config()
-        team_data.output()
+        if args.save_team:
+            team_data.save_config()
+        team_data.output(main_processor.player_name)
 
 
 

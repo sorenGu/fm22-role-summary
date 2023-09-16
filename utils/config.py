@@ -11,7 +11,7 @@ class DefaultConfig:
     name_x = 440
     name_y = 10
     name_width = 500
-    name_height = 30
+    name_height = 25
 
     role_relevance_colors = {
         "key": (69, 83, 76),
