@@ -4,7 +4,7 @@ from typing import Type
 from utils.config import DefaultConfig, elements_per_row
 from utils.gatherer import Gatherer, RoleGatherer
 from utils.image_to_text import image_to_int, image_to_str
-from utils.role_config import RoleConfig, ColorParserRoleConfig, SaveRoleConfig, UseRoleConfig
+from utils.role_config import RoleConfig, ColorParserRoleConfig, SaveRoleConfig, UseRoleConfig, RoleConfigCache
 from utils.screenshot import Screenshotter, crop_from_config, crop_name_from_config
 from utils.team_gatherer import TeamData
 
@@ -13,6 +13,7 @@ parser.add_argument('-k', '--save-key', required=False, type=str, help='Key to s
 parser.add_argument('-r', '--save-role', required=False, type=str, help='Key to save config for a role', default=None)
 parser.add_argument('-u', '--use-role', required=False, type=str, help='Key to save config for a role', default=None)
 parser.add_argument('-t', '--gather-team', required=False, type=str, help='Key team to compare', default=None)
+parser.add_argument('--rm', required=False, type=str, help='Remove player from team', default=None)
 parser.add_argument('-s', '--save-team', action='store_true')
 parser.add_argument('-o', '--old-data', action='store_true')
 parser.add_argument('-a', '--all-roles', action='store_true')
@@ -21,6 +22,8 @@ args: argparse.Namespace = parser.parse_args()
 
 
 class MainProcessor:
+    IS_GOALKEEPER = False
+
     def __init__(self, screenshotter: Screenshotter, config: Type[DefaultConfig], args: argparse.Namespace):
 
         self.config: Type[DefaultConfig] = config
@@ -52,6 +55,7 @@ class MainProcessor:
                     value = image_to_int(image)
                 except ValueError:
                     if row_i == 0 and attribute_number == elements_per_row[row_i] - 1:
+                        MainProcessor.IS_GOALKEEPER = True
                         continue  # gk has one less attribute in first row
                     raise
                 for gatherer in self.gatherers:
@@ -66,8 +70,16 @@ def main():
     from colorama import init as colorama_init
     colorama_init()
 
+    if team_name := args.gather_team:
+        RoleConfigCache.set_team(team_name)
+        if remove_player := args.rm:
+            team_data = TeamData(team_name)
+            team_data.remove_player(remove_player)
+            team_data.save_config()
+            return
+
     main_processor = MainProcessor(Screenshotter(), DefaultConfig, args)
-    team_data = TeamData(args.gather_team) if args.gather_team else None
+    team_data = TeamData(team_name) if team_name else None
 
     gatherers = main_processor.gather_data()
     max_score = -10000000000000
@@ -86,10 +98,13 @@ def main():
     for gatherer in gatherers:
         if max_score:
             gatherer.complete_data.percentage_of_max_score = 100 * gatherer.complete_data.average_value / max_score
-            if team_data and gatherer.complete_data.percentage_of_max_score > 85:
+            if not (MainProcessor.IS_GOALKEEPER == gatherer.role_name.startswith("GK")):
+                continue
+
+            if team_data is not None and gatherer.complete_data.percentage_of_max_score > 85:
                 team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value)
 
-        prefix_current = gatherer.role_name.split("_")[0]
+        prefix_current = gatherer.role_name[:1]
         if prefix_previous and prefix_current != prefix_previous:
             print("-" * 63)
 

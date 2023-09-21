@@ -10,11 +10,12 @@ from utils.role_config import RoleConfig
 class TeamData:
     CONFIG_FILE = "team_data.json"
 
-    def __init__(self, team_name: str):
+    def __init__(self, team_name: str, init_config=True):
         self.team_name = team_name
         self.config = self.read_config()
         self.current_team_config = self.config.get(team_name, {})
-        self.update_config_keys()
+        if init_config:
+            self.update_config_keys()
 
     def save_config(self):
         self.config[self.team_name] = self.current_team_config
@@ -52,3 +53,10 @@ class TeamData:
                 for player in players.items()
             ])
             print(f"{position: <10}- {players_string}")
+
+    def remove_player(self, remove_player: str):
+        for position, players in self.current_team_config.items():
+            try:
+                del players[remove_player]
+            except KeyError:
+                continue

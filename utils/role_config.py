@@ -1,13 +1,13 @@
 import json
 import sys
 from json import JSONDecodeError
-from typing import Union
+from typing import Union, Dict
 
 from PIL import Image
 
 from utils.config import elements_per_row, DefaultConfig
 
-ROLE_DATA_FILE = "role_data.json"
+
 COLORS = DefaultConfig.role_relevance_colors
 
 
@@ -30,14 +30,31 @@ def get_relevant_pixel(image: Image.Image):
     return image.getpixel((1, 7))
 
 
+class RoleConfigCache:
+    FULL_DATA = None
+    CURRENT_TEAM = "default"
+    FILE = "role_data.json"
+
+    @classmethod
+    def set_team(cls, team):
+        cls.CURRENT_TEAM = team
+
+
 class RoleConfig:
-    def read_config(self):
-        try:
-            with open(ROLE_DATA_FILE, "r") as f:
-                return json.load(f)
-        except (JSONDecodeError, FileNotFoundError) as e:
-            print(f"failed to read config {e}")
-            return {}
+    @staticmethod
+    def read_config() -> Dict:
+        if RoleConfigCache.FULL_DATA is None:
+            try:
+                with open(RoleConfigCache.FILE, "r") as f:
+                    data = json.load(f)
+            except (JSONDecodeError, FileNotFoundError) as e:
+                print(f"failed to read config {e}")
+                data = {}
+
+            RoleConfigCache.FULL_DATA = data
+
+        return RoleConfigCache.FULL_DATA.get(RoleConfigCache.CURRENT_TEAM, {})
+
 
     def get_importance(self, image, row_i, attribute_number):
         pass
@@ -45,6 +62,11 @@ class RoleConfig:
     def end(self):
         pass
 
+    @staticmethod
+    def save_data(role_data):
+        RoleConfigCache.FULL_DATA[RoleConfigCache.CURRENT_TEAM] = role_data
+        with open(RoleConfigCache.FILE, "w") as f:
+            json.dump(RoleConfigCache.FULL_DATA, f)
 
 
 class ColorParserRoleConfig(RoleConfig):
@@ -77,9 +99,7 @@ class SaveRoleConfig(ColorParserRoleConfig):
     def end(self):
         role_data = self.read_config()
         role_data[self.role_name] = self.role_config
-
-        with open(ROLE_DATA_FILE, "w") as f:
-            json.dump(role_data, f)
+        RoleConfig.save_data(role_data)
 
 
 class UseRoleConfig(RoleConfig):

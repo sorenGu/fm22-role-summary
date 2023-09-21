@@ -1,3 +1,5 @@
+import sys
+
 import cv2
 import numpy as np
 from PIL import Image
@@ -13,12 +15,17 @@ def image_to_str(screenshot=Image.Image) -> str:
 
 
 def image_to_int(screenshot=Image.Image) -> int:
-    inverted_pil = prepare_image(screenshot)
+    inverted_pil = prepare_image(screenshot, enlarge=4)
 
     try:
-        return int(pytesseract.image_to_string(inverted_pil).replace("\n", "").split("-")[-1])
+        return int(pytesseract.image_to_string(inverted_pil, config='digits').replace("\n", "").split("-")[-1])
     except Exception:
-        return int(pytesseract.image_to_string(inverted_pil, config='--psm 10').replace("\n", "").split("-")[-1])
+        try:
+            return int(pytesseract.image_to_string(inverted_pil, config='--psm 10 digits').replace("\n", "").split("-")[-1])
+        except Exception as e:
+            print(e)
+            inverted_pil.show()
+            sys.exit(2)
 
 
 def prepare_image(screenshot, enlarge=3):
