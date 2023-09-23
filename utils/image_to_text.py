@@ -10,8 +10,8 @@ class FailedToParseNumber(Exception):
     pass
 
 
-def image_to_str(screenshot=Image.Image) -> str:
-    return pytesseract.image_to_string(screenshot).replace("\n", "")
+def image_to_str(screenshot=Image.Image, config="") -> str:
+    return pytesseract.image_to_string(screenshot, config=config).replace("\n", "")
 
 
 def image_to_int(screenshot=Image.Image) -> int:
@@ -23,9 +23,8 @@ def image_to_int(screenshot=Image.Image) -> int:
         try:
             return int(pytesseract.image_to_string(inverted_pil, config='--psm 10 digits').replace("\n", "").split("-")[-1])
         except Exception as e:
-            print(e)
-            inverted_pil.show()
-            sys.exit(2)
+            # inverted_pil.show()
+            raise e
 
 
 def prepare_image(screenshot, enlarge=3):

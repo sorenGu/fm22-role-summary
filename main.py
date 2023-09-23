@@ -28,7 +28,7 @@ class MainProcessor:
 
         self.config: Type[DefaultConfig] = config
         self.screenshotter: Screenshotter = screenshotter
-        self.player_name = image_to_str(crop_name_from_config(DefaultConfig, screenshotter)).split(" ")[-1].capitalize()
+        self.player_name = image_to_str(crop_name_from_config(DefaultConfig, screenshotter), config="-c tessedit_char_blacklist=.-,").split(" ")[-1].capitalize()
 
         if not args.all_roles:
             self.gatherers = [Gatherer()]
