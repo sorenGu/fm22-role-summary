@@ -2,7 +2,7 @@ import argparse
 from typing import Type
 
 from utils.config import DefaultConfig, elements_per_row
-from utils.gatherer import Gatherer, RoleGatherer
+from utils.gatherer import Gatherer, RoleGatherer, BaseLineGatherer
 from utils.image_to_text import image_to_int, image_to_str
 from utils.role_config import RoleConfig, ColorParserRoleConfig, SaveRoleConfig, UseRoleConfig, RoleConfigCache
 from utils.screenshot import Screenshotter, crop_from_config, crop_name_from_config
@@ -22,13 +22,14 @@ args: argparse.Namespace = parser.parse_args()
 
 
 class MainProcessor:
-    IS_GOALKEEPER = False
+    is_goalkeeper = False
 
     def __init__(self, screenshotter: Screenshotter, config: Type[DefaultConfig], args: argparse.Namespace):
 
         self.config: Type[DefaultConfig] = config
         self.screenshotter: Screenshotter = screenshotter
         self.player_name = image_to_str(crop_name_from_config(DefaultConfig, screenshotter), config="-c tessedit_char_blacklist=.-,").split(" ")[-1].capitalize()
+        self.base_line_gatherer = BaseLineGatherer("base")
 
         if not args.all_roles:
             self.gatherers = [Gatherer()]
@@ -51,19 +52,17 @@ class MainProcessor:
                 image = crop_from_config(self.config, row_i, attribute_number, self.screenshotter)
                 importance = self.role_config.get_importance(image, row_i, attribute_number)
                 try:
-                    # value = random.randrange(5,21)
                     value = image_to_int(image)
                 except ValueError:
                     if row_i == 0 and attribute_number == elements_per_row[row_i] - 1:
-                        MainProcessor.IS_GOALKEEPER = True
+                        MainProcessor.is_goalkeeper = True
                         continue  # gk has one less attribute in first row
                     raise
                 for gatherer in self.gatherers:
-                    gatherer.add_to_row(row_i, attribute_number, importance, value)
+                    gatherer.add_to_row(row_i, attribute_number, value, importance)
+                self.base_line_gatherer.add_to_row(row_i, attribute_number, value)
         self.role_config.end()
         return self.gatherers
-
-
 
 
 def main():
@@ -84,7 +83,13 @@ def main():
     gatherers = main_processor.gather_data()
     max_score = -10000000000000
 
+    main_processor.base_line_gatherer.compile_complete_data()
+    print(main_processor.base_line_gatherer.complete_data.average_value_repr)
+
     for gatherer in gatherers:
+        if not (MainProcessor.is_goalkeeper == gatherer.role_name.startswith("GK")):
+            continue
+
         gatherer.compile_complete_data()
 
         if gatherer.complete_data.average_value > max_score:
@@ -96,21 +101,28 @@ def main():
     prefix_previous = None
     print(main_processor.player_name)
     for gatherer in gatherers:
+        if not (MainProcessor.is_goalkeeper == gatherer.role_name.startswith("GK")):
+            continue
+
+        gatherer.complete_data.efficiency = 20 * gatherer.complete_data.average_value / main_processor.base_line_gatherer.complete_data.average_value
+        print(gatherer.complete_data.efficiency)
+
         if max_score:
             gatherer.complete_data.percentage_of_max_score = 100 * gatherer.complete_data.average_value / max_score
-            if not (MainProcessor.IS_GOALKEEPER == gatherer.role_name.startswith("GK")):
-                continue
 
-            if team_data is not None and gatherer.complete_data.percentage_of_max_score > 85:
-                team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value)
+            if team_data is not None and gatherer.complete_data.percentage_of_max_score > 94:
+                team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value_repr)
+
+        if gatherer.complete_data.efficiency < 97:
+            continue
 
         prefix_current = gatherer.role_name[:1]
         if prefix_previous and prefix_current != prefix_previous:
-            print("-" * 63)
+            print("-" * 40)
 
         gatherer.output(args)
         prefix_previous = prefix_current
-    print("-"*63)
+    print("-"*40)
     if team_data:
         if args.save_team:
             team_data.save_config()

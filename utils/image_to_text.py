@@ -14,16 +14,17 @@ def image_to_str(screenshot=Image.Image, config="") -> str:
     return pytesseract.image_to_string(screenshot, config=config).replace("\n", "")
 
 
-def image_to_int(screenshot=Image.Image) -> int:
+def image_to_int(screenshot=Image.Image, show_on_error=False) -> int:
     inverted_pil = prepare_image(screenshot, enlarge=4)
 
     try:
         return int(pytesseract.image_to_string(inverted_pil, config='digits').replace("\n", "").split("-")[-1])
     except Exception:
         try:
-            return int(pytesseract.image_to_string(inverted_pil, config='--psm 10 digits').replace("\n", "").split("-")[-1])
+            return int(pytesseract.image_to_string(inverted_pil, config='--psm 10').replace("\n", "").split("-")[-1])
         except Exception as e:
-            # inverted_pil.show()
+            if show_on_error:
+                inverted_pil.show()
             raise e
 
 

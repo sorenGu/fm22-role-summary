@@ -31,29 +31,47 @@ def get_text_color(value):
     for max_value, style in (
             (0, (Fore.WHITE,)),
             (20, (Fore.WHITE, Style.BRIGHT)),
-            (25, (Fore.RED,)),
-            (30, (Fore.RED, Style.BRIGHT)),
-            (35, (Fore.YELLOW,)),
-            (40, (Fore.YELLOW, Style.BRIGHT)),
-            (45, (Fore.GREEN,)),
-            (50, (Fore.GREEN, Style.BRIGHT)),
-            (55, (Fore.CYAN,)),
-            (60, (Fore.CYAN, Style.BRIGHT)),
+            (25, (Fore.YELLOW,)),
+            (30, (Fore.YELLOW, Style.BRIGHT)),
+            (35, (Fore.GREEN,)),
+            (40, (Fore.GREEN, Style.BRIGHT)),
+            (45, (Fore.CYAN,)),
+            (50, (Fore.CYAN, Style.BRIGHT)),
+            (55, (Fore.RED,)),
+            (60, (Fore.RED, Style.BRIGHT)),
     ):
         if max_value > value:
             return "".join(str(x) for x in style)
     return "".join(str(x) for x in (Fore.MAGENTA, Style.BRIGHT))
 
+
+def get_text_color_small(value):
+    default = "".join(str(x) for x in (Fore.MAGENTA, Style.BRIGHT))
+    for max_value, style in (
+            (0, (Fore.WHITE,)),
+            (3, (Fore.WHITE, Style.BRIGHT)),
+            (6, (Fore.YELLOW, Style.BRIGHT)),
+            (9, (Fore.GREEN, Style.BRIGHT)),
+            (12, (Fore.CYAN, Style.BRIGHT)),
+    ):
+        try:
+            if max_value > value:
+                return "".join(str(x) for x in style)
+        except TypeError:
+            return default
+    return default
+
 class Row:
     percentage_of_max_score = None
+    efficiency = None
 
     def __init__(self, role_name="Overall"):
         self.role_name = role_name
         self.average_value = None
         self.elements = {
-            "key": Element(1.5),
-            "preferable": Element(1),
-            None: Element(0.3),
+            "key": Element(2),
+            "preferable": Element(1.5),
+            None: Element(1),
         }
 
     def add(self, key, value):
@@ -65,19 +83,26 @@ class Row:
         for key, element in row.elements.items():
             self.elements[key].set(element)
 
+    @property
+    def average_value_repr(self):
+        return self.average_value - 100
+
     def output(self, more_data=False):
         output = self.compile_average_value()
 
-        string_representation = f"{self.average_value :6.2f}"
+        string_representation = f"{self.average_value_repr :6.2f}"
 
         percentage = ""
         if self.percentage_of_max_score:
             if self.percentage_of_max_score >= 99.9:
-                percentage = "    <★>"
+                percentage = "    <★>  "
             else:
                 percentage = f"{self.percentage_of_max_score:8.2f}%"
 
-        print(f"{self.get_bar_string(self.average_value)} {self.role_name: >11}:{get_text_color(self.average_value)}{string_representation}{percentage}{Style.RESET_ALL}")
+        print(f"{self.role_name: <10}: {get_text_color(self.average_value_repr)}{string_representation}{Style.RESET_ALL}"
+              f"{get_text_color_small(self.percentage_of_max_score - 96)}{percentage}"
+              f"{Style.RESET_ALL} eff:"
+              f"{get_text_color_small(self.efficiency - 100)}{self.efficiency:4.0f}%{Style.RESET_ALL}")
         if more_data:
             print(output)
         return string_representation
@@ -85,7 +110,7 @@ class Row:
     def compile_average_value(self):
         output = ""
         if self.average_value is not None:
-            return output
+            return self.average_value
 
         overall = 0
         divisor = 0
@@ -95,7 +120,7 @@ class Row:
 
             overall += average * element.weight
             divisor += element.weight
-        self.average_value = ((overall / divisor) - 10) * 10
+        self.average_value = (overall / divisor) * 10
         return output
 
     @staticmethod
@@ -141,7 +166,7 @@ class Gatherer:
             self.complete_data.add_row_values(row)
         self.complete_data.compile_average_value()
 
-    def add_to_row(self, row_i, attribute_number, importance, value):
+    def add_to_row(self, row_i, attribute_number, value, importance=None):
         self.rows[row_i].add(importance, value)
 
     def save_old_data(self, old_data):
@@ -162,5 +187,10 @@ class RoleGatherer(Gatherer):
         super().__init__(role_name)
         self.role_config = role_config
 
-    def add_to_row(self, row_i, attribute_number, importance, value):
+    def add_to_row(self, row_i, attribute_number, value, importance=None):
         self.rows[row_i].add(self.role_config[row_i][attribute_number], value)
+
+
+class BaseLineGatherer(Gatherer):
+    def add_to_row(self, row_i, attribute_number, value, importance=None):
+        self.rows[row_i].add(None, value)
