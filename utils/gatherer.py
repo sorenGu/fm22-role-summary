@@ -170,12 +170,12 @@ class Gatherer:
         self.rows[row_i].add(importance, value)
 
     def save_old_data(self, old_data):
-        with open("old_data.json", "w") as f:
+        with open("data/old_data.json", "w") as f:
             json.dump(old_data, f)
 
     def get_old_data(self):
         try:
-            with open("old_data.json", "r") as f:
+            with open("data/old_data.json", "r") as f:
                 return json.load(f)
         except (JSONDecodeError, FileNotFoundError):
             pass

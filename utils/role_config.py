@@ -33,7 +33,7 @@ def get_relevant_pixel(image: Image.Image):
 class RoleConfigCache:
     FULL_DATA = None
     CURRENT_TEAM = "default"
-    FILE = "role_data.json"
+    FILE = "data/role_data.json"
 
     @classmethod
     def set_team(cls, team):

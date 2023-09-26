@@ -8,7 +8,7 @@ from utils.role_config import RoleConfig
 
 
 class TeamData:
-    CONFIG_FILE = "team_data.json"
+    CONFIG_FILE = "data/team_data.json"
 
     def __init__(self, team_name: str, init_config=True):
         self.team_name = team_name
