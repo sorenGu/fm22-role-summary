@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from json import JSONDecodeError
+from typing import List, Tuple
 
 from colorama import Fore, Style
 
@@ -64,20 +65,27 @@ def get_text_color_small(value):
 class Row:
     percentage_of_max_score = None
     efficiency = None
+    general_attributes: List[Tuple[int, int]]= [(1,2),(1,3),(1,4),(1,6),(1,7),(2,0),(2,4),(2,5),(2,6)]
 
     def __init__(self, role_name="Overall"):
         self.role_name = role_name
         self.average_value = None
         self.elements = {
             "key": Element(2),
-            "preferable": Element(1.5),
-            None: Element(1),
+            "preferable": Element(1),
+            "general": Element(0.5),
+            None: Element(0.2),
         }
 
-    def add(self, key, value):
-        self.elements[key].add(value)
-        if key is not None:
-            self.elements[None].add(value)
+    def add(self, key, value, row_i, attribute_j):
+        self.elements[None].add(value)
+
+        if key is None:
+            if (row_i, attribute_j) in self.general_attributes:
+                self.elements["general"].add(value)
+                return
+        else:
+            self.elements[key].add(value)
 
     def add_row_values(self, row: "Row"):
         for key, element in row.elements.items():
@@ -114,13 +122,16 @@ class Row:
 
         overall = 0
         divisor = 0
+        many_value_corrector = 1
         for key, element in self.elements.items():
             average = element.get_average()
             output += f"{key}: {average:.2f}, "
 
             overall += average * element.weight
             divisor += element.weight
-        self.average_value = (overall / divisor) * 10
+
+            many_value_corrector += element.number_of_attributes * max(element.weight, 1) * .003
+        self.average_value = (overall / divisor) * 8 * many_value_corrector
         return output
 
     @staticmethod
@@ -167,7 +178,7 @@ class Gatherer:
         self.complete_data.compile_average_value()
 
     def add_to_row(self, row_i, attribute_number, value, importance=None):
-        self.rows[row_i].add(importance, value)
+        self.rows[row_i].add(importance, value, row_i, attribute_number)
 
     def save_old_data(self, old_data):
         with open("data/old_data.json", "w") as f:
@@ -181,6 +192,9 @@ class Gatherer:
             pass
         return {"data": []}
 
+    def calculate_efficiency(self, main_processor):
+        self.complete_data.efficiency = 5 * self.complete_data.average_value / main_processor.base_line_gatherer.complete_data.average_value
+
 
 class RoleGatherer(Gatherer):
     def __init__(self, role_name, role_config):
@@ -188,9 +202,9 @@ class RoleGatherer(Gatherer):
         self.role_config = role_config
 
     def add_to_row(self, row_i, attribute_number, value, importance=None):
-        self.rows[row_i].add(self.role_config[row_i][attribute_number], value)
+        self.rows[row_i].add(self.role_config[row_i][attribute_number], value, row_i, attribute_number)
 
 
 class BaseLineGatherer(Gatherer):
     def add_to_row(self, row_i, attribute_number, value, importance=None):
-        self.rows[row_i].add(None, value)
+        self.rows[row_i].elements[None].add(value)

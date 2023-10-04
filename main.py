@@ -28,7 +28,7 @@ class MainProcessor:
 
         self.config: Type[DefaultConfig] = config
         self.screenshotter: Screenshotter = screenshotter
-        self.player_name = image_to_str(crop_name_from_config(DefaultConfig, screenshotter), config="-c tessedit_char_blacklist=.-,").split(" ")[-1].capitalize()
+        self.player_name = image_to_str(crop_name_from_config(DefaultConfig, screenshotter), config="-c tessedit_char_blacklist=.:\\\"-,").split(" ")[-1].capitalize()
         self.base_line_gatherer = BaseLineGatherer("base")
 
         if not args.all_roles:
@@ -69,6 +69,8 @@ def main():
     from colorama import init as colorama_init
     colorama_init()
 
+
+
     if team_name := args.gather_team:
         RoleConfigCache.set_team(team_name)
         if remove_player := args.rm:
@@ -84,7 +86,6 @@ def main():
     max_score = -10000000000000
 
     main_processor.base_line_gatherer.compile_complete_data()
-    print(main_processor.base_line_gatherer.complete_data.average_value_repr)
 
     for gatherer in gatherers:
         if not (MainProcessor.is_goalkeeper == gatherer.role_name.startswith("GK")):
@@ -104,16 +105,15 @@ def main():
         if not (MainProcessor.is_goalkeeper == gatherer.role_name.startswith("GK")):
             continue
 
-        gatherer.complete_data.efficiency = 20 * gatherer.complete_data.average_value / main_processor.base_line_gatherer.complete_data.average_value
-        print(gatherer.complete_data.efficiency)
+        gatherer.calculate_efficiency(main_processor)
 
         if max_score:
             gatherer.complete_data.percentage_of_max_score = 100 * gatherer.complete_data.average_value / max_score
 
-            if team_data is not None and gatherer.complete_data.percentage_of_max_score > 94:
+            if team_data is not None and gatherer.complete_data.percentage_of_max_score > 96:
                 team_data.add(main_processor.player_name, gatherer.role_name, gatherer.complete_data.average_value_repr)
 
-        if gatherer.complete_data.efficiency < 97:
+        if gatherer.complete_data.efficiency < 105 and not (team_data is not None and gatherer.complete_data.percentage_of_max_score > 95):
             continue
 
         prefix_current = gatherer.role_name[:1]
