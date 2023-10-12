@@ -29,6 +29,22 @@ def match_color(image: Image.Image) -> Union[None, str]:
 def get_relevant_pixel(image: Image.Image):
     return image.getpixel((1, 7))
 
+"""
+|Rec|Inf|Name|Age|Acc|Aer|Agg|Agi|Ant|Bal|Bra|Cmd|Com|Cmp|Cnt|Cor|Cro|Dec|Det|Dri|Ecc|Fin|Fir|Fla|Fre|Han|Hea|Jum|Kic|Ldr|Lon|L Th|Mar|Nat|OtB|1v1|Pac|Pas|Pen|Pos|Pun|Ref|TRO|Sta|Str|Tck|Tea|Tec|Thr|Vis|Wor|
+"""
+
+POSITION_MAPPING = (
+    ("Cor", "Cro", "Dri", "Fin", "Fir", "Fre", "Hea", "Lon", "L Th", "Mar", "Pas", "Pen", "Tck", "Tec"),
+    ("Agg", "Ant", "Bra", "Cmp", "Cnt", "Dec", "Det", "Fla", "Ldr", "OtB", "Pos", "Tea", "Vis", "Wor"),
+    ("Acc", "Agi", "Bal", "Jum", "Nat", "Pac", "Sta", "Str")
+)
+
+POSITION_MAPPING_GK = (
+    ("Aer", "Cmd", "Com", "Ecc", "Fir", "Han", "Kic", "1v1", "Pas", "Pun", "Ref", "TRO", "Thr"),
+    ("Agg", "Ant", "Bra", "Cmp", "Cnt", "Dec", "Det", "Fla", "Ldr", "OtB", "Pos", "Tea", "Vis", "Wor"),
+    ("Acc", "Agi", "Bal", "Jum", "Nat", "Pac", "Sta", "Str")
+)
+
 
 class RoleConfigCache:
     FULL_DATA = None

@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import List, Dict
 
 from utils.staffer_config import StaffAttributes, RoleConfig
-from utils.staffer_roles import get_coach_roles
+from utils.staffer_roles import get_coach_roles, get_head_coach
 
 input_file = "C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\staff_hsv.rtf"
 
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     from colorama import init as colorama_init
     colorama_init()
     print(file_name)
-    main(input_file, get_coach_roles())
+    main(input_file, get_head_coach())

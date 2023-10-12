@@ -8,7 +8,7 @@ class DefaultConfig:
     height_between = 15.6
     width = 51
 
-    name_x = 440
+    name_x = 438
     name_y = 10
     name_width = 500
     name_height = 25

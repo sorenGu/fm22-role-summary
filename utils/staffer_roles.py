@@ -1,17 +1,28 @@
 from typing import List
 
-from utils.staffer_config import RoleConfig, Attr
+from utils.staffer_config import RoleConfig, Attr, ATTRIBUTE_NAME
 
 
-def get_coach_default_attributes(weight=2) -> List[Attr]:
+def get_with_same_weight(attributes: List[ATTRIBUTE_NAME], weight=2) -> List[Attr]:
     return [
-        Attr("det", weight),
-        Attr("dis", weight),
-        Attr("mot", weight),
+        Attr(attribute, weight) for attribute in attributes
     ]
 
 
+def get_coach_default_attributes(weight=2) -> List[Attr]:
+    return get_with_same_weight(["det", "dis", "mot"], weight)
+
+
 # 'ada', 'ana d', 'att', 'def', 'det', 'fit', 'gkd', 'gkh', 'gks', 'judge a', 'judge p', 'jud sa', 'dis', 'men', 'mot', 'negotiating', 'mgm', 'phy', 'sps', 'tco', 'tac knw', 'tec', 'youth'
+
+
+def get_head_coach() -> List[RoleConfig]:
+    return [
+        RoleConfig("Head Coach", get_with_same_weight(['judge a', 'judge p', 'tac knw', 'mgm', 'mot'])),
+        RoleConfig("Head Coach Youth", get_with_same_weight(['judge a', 'judge p', 'tac knw', 'mgm', 'mot', 'youth'])),
+        RoleConfig("Assistant Coach", get_with_same_weight(['judge a', 'judge p', 'mgm'])),
+        RoleConfig("Assistant Coach Youth", get_with_same_weight(['judge a', 'judge p', 'mgm', 'youth'])),
+    ]
 
 
 def get_coach_roles() -> List[RoleConfig]:
@@ -27,3 +38,4 @@ def get_coach_roles() -> List[RoleConfig]:
         RoleConfig("Possession Tec", [Attr("men", 6), Attr("tec", 3)] + get_coach_default_attributes()),
         RoleConfig("Fitness", [Attr("fit", 9)] + get_coach_default_attributes()),
     ]
+

@@ -103,12 +103,12 @@ class Row:
         percentage = ""
         if self.percentage_of_max_score:
             if self.percentage_of_max_score >= 99.9:
-                percentage = "    <★>  "
+                percentage = f"{get_text_color_small(300)}    <★>  "
             else:
-                percentage = f"{self.percentage_of_max_score:8.2f}%"
+                percentage = f"{get_text_color_small(self.percentage_of_max_score - 96)}{self.percentage_of_max_score:8.2f}%"
 
         print(f"{self.role_name: <10}: {get_text_color(self.average_value_repr)}{string_representation}{Style.RESET_ALL}"
-              f"{get_text_color_small(self.percentage_of_max_score - 96)}{percentage}"
+              f"{percentage}"
               f"{Style.RESET_ALL} eff:"
               f"{get_text_color_small(self.efficiency - 100)}{self.efficiency:4.0f}%{Style.RESET_ALL}")
         if more_data:
@@ -145,6 +145,10 @@ class Row:
 class Gatherer:
     def __init__(self, role_name="Overall"):
         self.role_name = role_name
+        self.rows: tuple[Row, Row, Row] = (Row(), Row(), Row())
+        self.complete_data: Row = None
+
+    def reset(self):
         self.rows: tuple[Row, Row, Row] = (Row(), Row(), Row())
         self.complete_data: Row = None
 
