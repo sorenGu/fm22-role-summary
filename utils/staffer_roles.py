@@ -28,14 +28,14 @@ def get_head_coach() -> List[RoleConfig]:
 def get_coach_roles() -> List[RoleConfig]:
     # source: https://fmcalc.com
     return [
-        RoleConfig("GK Shot Stop", [Attr("gks", 9)] + get_coach_default_attributes()),
-        RoleConfig("GK Handling", [Attr("gkh", 6), Attr("gkd", 3)] + get_coach_default_attributes()),
-        RoleConfig("Defending Tac", [Attr("def", 6), Attr("tco", 3)] + get_coach_default_attributes()),
-        RoleConfig("Defending Tec", [Attr("def", 6), Attr("tec", 3)] + get_coach_default_attributes()),
-        RoleConfig("Attacking Tac", [Attr("att", 6), Attr("tco", 3)] + get_coach_default_attributes()),
-        RoleConfig("Attacking Tec", [Attr("att", 6), Attr("tec", 3)] + get_coach_default_attributes()),
-        RoleConfig("Possession Tac", [Attr("men", 6), Attr("tco", 3)] + get_coach_default_attributes()),
-        RoleConfig("Possession Tec", [Attr("men", 6), Attr("tec", 3)] + get_coach_default_attributes()),
-        RoleConfig("Fitness", [Attr("fit", 9)] + get_coach_default_attributes()),
+        RoleConfig("GK Shot Stop", [Attr("gks", 9)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("GK Handling", [Attr("gkh", 6), Attr("gkd", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Defending Tac", [Attr("def", 6), Attr("tco", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Defending Tec", [Attr("def", 6), Attr("tec", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Attacking Tac", [Attr("att", 6), Attr("tco", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Attacking Tec", [Attr("att", 6), Attr("tec", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Possession Tac", [Attr("men", 6), Attr("tco", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Possession Tec", [Attr("men", 6), Attr("tec", 3)] + get_coach_default_attributes(), normalize=False),
+        RoleConfig("Fitness", [Attr("fit", 9)] + get_coach_default_attributes(), normalize=False),
     ]
 

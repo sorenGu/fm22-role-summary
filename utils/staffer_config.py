@@ -38,10 +38,15 @@ def short_name(name:str):
 class RoleConfig:
     name: str
     weighted_attributes: List[Attr]
+    normalize: bool = True
     _top_staffers: Dict[str, float] = field(default_factory=lambda: {})
 
     def calculate_score(self, weighted_value) -> float:
-        return weighted_value / 60
+        if not self.normalize:
+            return weighted_value / 60
+        else:
+            weight_sum = sum([attribute.weight for attribute in self.weighted_attributes])
+            return weighted_value / (4 * weight_sum)
 
     def evaluate_staffer(self, staffer: str, attributes: StaffAttributes):
         weighted_value = 0

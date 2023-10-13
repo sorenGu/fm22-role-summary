@@ -6,7 +6,7 @@ from utils.staffer_roles import get_coach_roles, get_head_coach
 
 input_file = "C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\staff_hsv.rtf"
 
-file_name = "u19_coaches"
+file_name = "potentional coaches"
 input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\{file_name}.rtf"
 
 
