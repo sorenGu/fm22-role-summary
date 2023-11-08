@@ -65,5 +65,5 @@ class RoleConfig:
         self._top_staffers = {
             pair[0]: pair[1]
             for pair in
-            sorted(self._top_staffers.items(), key=lambda x: x[1], reverse=True)[:8]
+            sorted(self._top_staffers.items(), key=lambda x: x[1], reverse=True)[:7]
         }

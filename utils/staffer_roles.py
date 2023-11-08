@@ -20,8 +20,11 @@ def get_head_coach() -> List[RoleConfig]:
     return [
         RoleConfig("Head Coach", get_with_same_weight(['judge a', 'judge p', 'tac knw', 'mgm', 'mot'])),
         RoleConfig("Head Coach Youth", get_with_same_weight(['judge a', 'judge p', 'tac knw', 'mgm', 'mot', 'youth'])),
+        RoleConfig("Head of Youth", get_with_same_weight(['judge a', 'judge p', 'youth'])),
         RoleConfig("Assistant Coach", get_with_same_weight(['judge a', 'judge p', 'mgm'])),
         RoleConfig("Assistant Coach Youth", get_with_same_weight(['judge a', 'judge p', 'mgm', 'youth'])),
+        RoleConfig("Scout", get_with_same_weight(['judge a', 'judge p'], weight=3) + [Attr("ada", 1)]),
+        RoleConfig("Performance Ana", get_with_same_weight(['ana d', 'tac knw'])),
     ]
 
 

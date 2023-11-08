@@ -1,13 +1,13 @@
 import argparse
 import json
 import logging
+from colorama import init as colorama_init, Style
 from collections import defaultdict
 from typing import List, Dict, Tuple
 
 from utils.gatherer import RoleGatherer
 from utils.role_config import RoleConfig, POSITION_MAPPING, RoleConfigCache, POSITION_MAPPING_GK
-from utils.util import HighScoreTracker
-
+from utils.util import HighScoreTracker, display_name
 
 parser = argparse.ArgumentParser(description='Process command-line arguments.')
 parser.add_argument('-t', '--team', required=False, type=str, help='Key team to compare', default=None)
@@ -33,11 +33,21 @@ class NotFound(Exception):
 file_name = "potential_players"
 input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\{file_name}.rtf"
 
-logging.basicConfig(filename='data/reader_output.txt', level=logging.DEBUG, format='')
+logging.basicConfig(filename='data/reader_output.txt', level=logging.DEBUG, format='', encoding='utf-8')
 
 
 "|Rec|Inf|Name|Age|Acc|Aer|Agg|Agi|Ant|Bal|Bra|Cmd|Com|Cmp|Cnt|Cor|Cro|Dec|Det|Dri|Ecc|Fin|Fir|Fla|Fre|Han|Hea|Jum|Kic|Ldr|Lon|L Th|Mar|Nat|OtB|1v1|Pac|Pas|Pen|Pos|Pun|Ref|TRO|Sta|Str|Tck|Tea|Tec|Thr|Vis|Wor|"
-def main(input_file_path: str, gatherers: List[RoleGatherer]):
+def main(team: str, save, **kwargs):
+    output = ""
+    role_config: RoleConfig = RoleConfig()
+
+    RoleConfigCache.set_team(team)
+    gatherers: List[RoleGatherer] = []
+    for role_name, role_config in role_config.read_config().items():
+        gatherer = RoleGatherer(role_name, role_config)
+        gatherer.highscore = HighScoreTracker()
+        gatherers.append(gatherer)
+
     attribute_order_is_set = False
     attribute_order: Dict[int, Tuple[int, int]] = {}
     attribute_gk_order: Dict[int, Tuple[int, int]] = {}
@@ -52,7 +62,7 @@ def main(input_file_path: str, gatherers: List[RoleGatherer]):
         for _ in row:
             attributes_gk[i].append(None)
 
-    with open(input_file_path, "r", encoding="utf8") as f:
+    with open(input_file, "r", encoding="utf8") as f:
         for line in f.readlines():
             data = line.split("|")
             if len(data) < 4:
@@ -113,7 +123,7 @@ def main(input_file_path: str, gatherers: List[RoleGatherer]):
 
             except InvalidPlayer:
                 continue
-
+            max_score = -10000000
             for gatherer in gatherers:
                 gatherer.reset()
 
@@ -126,15 +136,20 @@ def main(input_file_path: str, gatherers: List[RoleGatherer]):
                             continue
                         gatherer.add_to_row(row_i, attribute_number, value)
                 gatherer.compile_complete_data()
+                if gatherer.complete_data.average_value > max_score:
+                    max_score = gatherer.complete_data.average_value
+
+            for gatherer in gatherers:
+                if gatherer.complete_data.average_value / max_score < .97:
+                    continue
                 gatherer.highscore.try_add_score(f"{name} ({age})", gatherer.complete_data.average_value_repr)
 
     logging.info(f"\n-------------------{team}----------------------------")
     for gatherer in gatherers:
-        line = gatherer.highscore.output(gatherer.role_name)
-        logging.info(line)
-        print(line)
+        logging.info(gatherer.highscore.output(gatherer.role_name, display_name))
+        print(gatherer.highscore.output(gatherer.role_name)[:290] + Style.RESET_ALL)
 
-    if args.save:
+    if save:
         output = {}
         for gatherer in gatherers:
             output[gatherer.role_name] = {}
@@ -145,21 +160,9 @@ def main(input_file_path: str, gatherers: List[RoleGatherer]):
             json.dump(output, f)
 
 
-
 if __name__ == "__main__":
-    from colorama import init as colorama_init
     colorama_init()
-    print(file_name)
 
-    role_config: RoleConfig = RoleConfig()
     team = args.team if args.team else "hsv_gyr"
 
-    RoleConfigCache.set_team(team)
-    gatherers: List[RoleGatherer] = []
-    for role_name, role_config in role_config.read_config().items():
-        gatherer = RoleGatherer(role_name, role_config)
-        gatherer.highscore = HighScoreTracker()
-        gatherers.append(gatherer)
-
-
-    main(input_file, gatherers)
+    main(team, args.save)

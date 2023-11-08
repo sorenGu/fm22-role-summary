@@ -4,18 +4,17 @@ from typing import List, Dict
 from utils.staffer_config import StaffAttributes, RoleConfig
 from utils.staffer_roles import get_coach_roles, get_head_coach
 
-input_file = "C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\staff_hsv.rtf"
-
 file_name = "potentional coaches"
 input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\{file_name}.rtf"
 
 
-def main(input_file_path: str, roles_configs: List[RoleConfig]):
+def main(**kwargs):
+    roles_configs = get_head_coach() + get_coach_roles()
     attribute_order_is_set = False
     attribute_order = []
     staff_attributes: Dict[str, StaffAttributes] = defaultdict(dict)
 
-    with open(input_file_path, "r", encoding="utf8") as f:
+    with open(input_file, "r", encoding="utf8") as f:
         for line in f.readlines():
             data = line.split("|")
             if len(data) < 4:
@@ -47,5 +46,5 @@ def main(input_file_path: str, roles_configs: List[RoleConfig]):
 if __name__ == "__main__":
     from colorama import init as colorama_init
     colorama_init()
-    print(file_name)
-    main(input_file, get_head_coach())
+
+    main()

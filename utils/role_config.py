@@ -1,7 +1,7 @@
 import json
 import sys
 from json import JSONDecodeError
-from typing import Union, Dict
+from typing import Union, Dict, TypedDict, List
 
 from PIL import Image
 
@@ -46,10 +46,19 @@ POSITION_MAPPING_GK = (
 )
 
 
+IMPORTANCE_STR = Union[None, str]
+ROLE_CONFIG_TYPE = tuple[list[IMPORTANCE_STR], list[IMPORTANCE_STR], list[IMPORTANCE_STR]]
+
+
+class ConfigData(TypedDict):
+    roles: Dict[str, ROLE_CONFIG_TYPE]
+    teams: Dict[List[str]]
+
+
 class RoleConfigCache:
-    FULL_DATA = None
+    FULL_DATA: ConfigData = None
     CURRENT_TEAM = "default"
-    FILE = "data/role_data.json"
+    FILE = "data/role_config.json"
 
     @classmethod
     def set_team(cls, team):
@@ -58,19 +67,18 @@ class RoleConfigCache:
 
 class RoleConfig:
     @staticmethod
-    def read_config() -> Dict:
+    def read_config() -> ConfigData:
         if RoleConfigCache.FULL_DATA is None:
             try:
                 with open(RoleConfigCache.FILE, "r") as f:
-                    data = json.load(f)
+                    data: ConfigData = json.load(f)
             except (JSONDecodeError, FileNotFoundError) as e:
                 print(f"failed to read config {e}")
-                data = {}
+                data: ConfigData = {"roles": {}, "teams": []}
 
             RoleConfigCache.FULL_DATA = data
 
-        return RoleConfigCache.FULL_DATA.get(RoleConfigCache.CURRENT_TEAM, {})
-
+        return RoleConfigCache.FULL_DATA
 
     def get_importance(self, image, row_i, attribute_number):
         pass
@@ -80,7 +88,7 @@ class RoleConfig:
 
     @staticmethod
     def save_data(role_data):
-        RoleConfigCache.FULL_DATA[RoleConfigCache.CURRENT_TEAM] = role_data
+        RoleConfigCache.FULL_DATA["roles"] = role_data
         with open(RoleConfigCache.FILE, "w") as f:
             json.dump(RoleConfigCache.FULL_DATA, f)
 
@@ -90,19 +98,17 @@ class ColorParserRoleConfig(RoleConfig):
         return match_color(image)
 
 
-IMPORTANCE_STR = Union[None, str]
-
-
 class SaveRoleConfig(ColorParserRoleConfig):
     def __init__(self, role_name: str):
-        role_data = self.read_config()
+        role_data = self.read_config()["roles"]
         if role_name in role_data:
             answer = input(f"Do you want to override {role_name}? (y/n)")
             if answer != "y":
                 sys.exit()
 
         self.role_name = role_name
-        self.role_config: tuple[list[IMPORTANCE_STR], list[IMPORTANCE_STR], list[IMPORTANCE_STR]] = tuple(
+
+        self.role_config: ROLE_CONFIG_TYPE = tuple(
             [None for _ in range(row_element_number)] for
             row_element_number in elements_per_row
         )
@@ -113,19 +119,6 @@ class SaveRoleConfig(ColorParserRoleConfig):
         return importance
 
     def end(self):
-        role_data = self.read_config()
+        role_data = self.read_config()["roles"]
         role_data[self.role_name] = self.role_config
         RoleConfig.save_data(role_data)
-
-
-class UseRoleConfig(RoleConfig):
-    def __init__(self, role_name: str):
-        role_data = self.read_config()
-        try:
-            self.role_config = role_data[role_name]
-        except KeyError:
-            print(f"Failed to find role {role_name}. Available roles: {role_data.keys()}")
-            sys.exit()
-
-    def get_importance(self, image, row_i, attribute_number):
-        return self.role_config[row_i][attribute_number]
