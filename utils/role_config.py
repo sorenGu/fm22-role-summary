@@ -1,7 +1,7 @@
 import json
 import sys
 from json import JSONDecodeError
-from typing import Union, Dict, TypedDict, List
+from typing import Union, Dict, TypedDict, List, cast
 
 from PIL import Image
 
@@ -52,7 +52,7 @@ ROLE_CONFIG_TYPE = tuple[list[IMPORTANCE_STR], list[IMPORTANCE_STR], list[IMPORT
 
 class ConfigData(TypedDict):
     roles: Dict[str, ROLE_CONFIG_TYPE]
-    teams: Dict[List[str]]
+    teams: Dict[str, List[str]]
 
 
 class RoleConfigCache:
@@ -74,7 +74,7 @@ class RoleConfig:
                     data: ConfigData = json.load(f)
             except (JSONDecodeError, FileNotFoundError) as e:
                 print(f"failed to read config {e}")
-                data: ConfigData = {"roles": {}, "teams": []}
+                data: ConfigData = {"roles": {}, "teams": {}}
 
             RoleConfigCache.FULL_DATA = data
 
@@ -97,6 +97,14 @@ class ColorParserRoleConfig(RoleConfig):
     def get_importance(self, image, row_i, attribute_number):
         return match_color(image)
 
+
+def sort_role_data(key):
+    position = key[0].split("_")[0].lower()
+    position_order = ["gk", "dc", "dw", "dmc", "dmw", "mc", "mw", "amc", "amw", "st"]
+    if position in position_order:
+        return position_order.index(position)
+    else:
+        return 50
 
 class SaveRoleConfig(ColorParserRoleConfig):
     def __init__(self, role_name: str):
@@ -121,4 +129,5 @@ class SaveRoleConfig(ColorParserRoleConfig):
     def end(self):
         role_data = self.read_config()["roles"]
         role_data[self.role_name] = self.role_config
+        role_data = dict(sorted(role_data.items(), key=sort_role_data))
         RoleConfig.save_data(role_data)

@@ -3,6 +3,24 @@ elements_per_row = (14, 14, 8)
 
 class DefaultConfig:
     top = 452
+    rows_starts = (993, 1250, 1507)
+    height = 13
+    height_between = 16.5
+    width = 51
+
+    name_x = 438
+    name_y = 10
+    name_width = 500
+    name_height = 27
+
+    role_relevance_colors = {
+        "key": (66, 80, 70),
+        "preferable": (60, 78, 92),
+    }
+
+
+class FM23Config:
+    top = 452
     rows_starts = (1060, 1302, 1542)
     height = 13
     height_between = 15.6

@@ -152,25 +152,9 @@ class Gatherer:
         self.rows: tuple[Row, Row, Row] = (Row(), Row(), Row())
         self.complete_data: Row = None
 
-    def output(self, args: argparse.Namespace):
+    def output(self):
         self.compile_complete_data()
         self.complete_data = self.complete_data.output()
-
-        old_data = self.get_old_data()
-        if args.old_data:
-            print("------------------------\nold data:")
-            for data in old_data["data"]:
-                print("-", data)
-
-        old_data["data"] = old_data["data"][:4]
-        old_data["data"].insert(0, self.complete_data)
-
-        if args.save_key:
-            if "key_data" not in old_data:
-                old_data["key_data"] = {}
-            old_data["key_data"][args.save_key] = self.complete_data
-
-        self.save_old_data(old_data)
 
     def compile_complete_data(self):
         if self.complete_data is not None:
@@ -201,6 +185,8 @@ class Gatherer:
 
 
 class RoleGatherer(Gatherer):
+    best_score_in_team = "???"
+
     def __init__(self, role_name, role_config):
         super().__init__(role_name)
         self.role_config = role_config

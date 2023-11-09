@@ -23,6 +23,11 @@ class MainProcessor:
 
         self.config: Type[DefaultConfig] = config
         self.screenshotter: Screenshotter = screenshotter
+
+        self.player_name = image_to_str(
+            crop_name_from_config(DefaultConfig, screenshotter),
+            config="-c tessedit_char_blacklist=.\\\”:\\\"-,").split(" ")[-1].capitalize()
+
         self.base_line_gatherer = BaseLineGatherer("base")
 
         if args.save_role:
@@ -33,23 +38,20 @@ class MainProcessor:
             self.gatherers = []
             config = self.role_config.read_config()
             try:
-                team_roles = config[RoleConfigCache.CURRENT_TEAM]
+                team_roles = config["teams"][RoleConfigCache.CURRENT_TEAM]
             except KeyError:
                 print(f"team {RoleConfigCache.CURRENT_TEAM} not in config file: {RoleConfigCache.FILE}")
                 sys.exit(2)
-            for role_name in team_roles["teams"]:
+            for role_name in team_roles:
                 try:
                     self.gatherers.append(RoleGatherer(role_name, config["roles"][role_name]))
                 except KeyError:
                     print(f"No configuration found for {role_name} in {RoleConfigCache.FILE}")
                     sys.exit(2)
 
-        self.player_name = image_to_str(
-            crop_name_from_config(DefaultConfig, screenshotter),
-            config="-c tessedit_char_blacklist=.\\\”:\\\"-,").split(" ")[-1].capitalize()
 
     def gather_data(self) -> list[Gatherer]:
-
+        MainProcessor.is_goalkeeper = False
         for row_i in range(3):
             for attribute_number in range(elements_per_row[row_i]):
                 image = crop_from_config(self.config, row_i, attribute_number, self.screenshotter)
@@ -128,7 +130,7 @@ def main(team, save, args, **kwargs):
         if prefix_previous and prefix_current != prefix_previous:
             print("-" * 40)
 
-        gatherer.output(args)
+        gatherer.output()
         prefix_previous = prefix_current
     print("-"*40)
     if team_data:
@@ -137,10 +139,9 @@ def main(team, save, args, **kwargs):
         team_data.output(main_processor.player_name)
 
 
-
 if __name__ == '__main__':
     args: argparse.Namespace = parser.parse_args()
-    if not args.gather_team and args.save_role:
+    if not args.gather_team and not args.save_role:
         print("Use either gather-team or save_role")
         parser.print_help()
         sys.exit(2)

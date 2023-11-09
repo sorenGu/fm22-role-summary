@@ -4,7 +4,7 @@ from json import JSONDecodeError
 from colorama import Style, Fore, Back
 
 from utils.gatherer import get_text_color
-from utils.role_config import RoleConfig
+from utils.role_config import RoleConfig, RoleConfigCache
 
 
 class TeamData:
@@ -15,7 +15,7 @@ class TeamData:
         self.config = self.read_config()
         self.current_team_config = self.config.get(team_name, {})
         if init_config:
-            self.update_config_keys()
+            self.update_config_keys(team_name)
 
     def save_config(self):
         self.config[self.team_name] = self.current_team_config
@@ -31,8 +31,8 @@ class TeamData:
         except (JSONDecodeError, FileNotFoundError) as e:
             return {}
 
-    def update_config_keys(self):
-        for key in RoleConfig().read_config():
+    def update_config_keys(self, team_name):
+        for key in RoleConfig.read_config()["teams"][team_name]:
             if key not in self.current_team_config:
                 self.current_team_config[key] = {}
 

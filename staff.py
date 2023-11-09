@@ -3,9 +3,10 @@ from typing import List, Dict
 
 from utils.staffer_config import StaffAttributes, RoleConfig
 from utils.staffer_roles import get_coach_roles, get_head_coach
+from utils.team_gatherer import TeamData
 
-file_name = "potentional coaches"
-input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\{file_name}.rtf"
+file_name = "staff"
+input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2024\\{file_name}.rtf"
 
 
 def main(**kwargs):
@@ -19,8 +20,8 @@ def main(**kwargs):
             data = line.split("|")
             if len(data) < 4:
                 continue
-            staff_name = data[2].strip()
-            data = data[4:-1]
+            staff_name = f"{data[2].strip()}_{data[3].strip()}"
+            data = data[5:-1]
 
             if not attribute_order_is_set:
                 attribute_order = [header.strip().lower() for header in data]
@@ -31,14 +32,14 @@ def main(**kwargs):
                 try:
                     value = int(value)
                 except ValueError as e:
-                    if not staff_name.strip():
+                    if not staff_name:
                         break
                     raise ValueError(f"Failed to parse data for '{staff_name}' with data: {data}")
                 staff_attributes[staff_name][attribute_name] = value
 
     for roles_config in roles_configs:
         for staffer, attributes in staff_attributes.items():
-            roles_config.evaluate_staffer(staffer, attributes)
+            roles_config.evaluate_staffer(f"{staffer}", attributes)
 
         roles_config.output()
 

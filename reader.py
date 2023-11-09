@@ -7,6 +7,7 @@ from typing import List, Dict, Tuple
 
 from utils.gatherer import RoleGatherer
 from utils.role_config import RoleConfig, POSITION_MAPPING, RoleConfigCache, POSITION_MAPPING_GK
+from utils.team_gatherer import TeamData
 from utils.util import HighScoreTracker, display_name
 
 parser = argparse.ArgumentParser(description='Process command-line arguments.')
@@ -30,22 +31,29 @@ class NotFound(Exception):
         self.attribute_name = attribute_name
 
 
-file_name = "potential_players"
-input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2023\\{file_name}.rtf"
+file_name = "players"
+input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2024\\{file_name}.rtf"
 
 logging.basicConfig(filename='data/reader_output.txt', level=logging.DEBUG, format='', encoding='utf-8')
 
 
 "|Rec|Inf|Name|Age|Acc|Aer|Agg|Agi|Ant|Bal|Bra|Cmd|Com|Cmp|Cnt|Cor|Cro|Dec|Det|Dri|Ecc|Fin|Fir|Fla|Fre|Han|Hea|Jum|Kic|Ldr|Lon|L Th|Mar|Nat|OtB|1v1|Pac|Pas|Pen|Pos|Pun|Ref|TRO|Sta|Str|Tck|Tea|Tec|Thr|Vis|Wor|"
 def main(team: str, save, **kwargs):
-    output = ""
     role_config: RoleConfig = RoleConfig()
 
     RoleConfigCache.set_team(team)
     gatherers: List[RoleGatherer] = []
-    for role_name, role_config in role_config.read_config().items():
-        gatherer = RoleGatherer(role_name, role_config)
+    config = role_config.read_config()
+
+    team_data = TeamData.read_config().get(team, {})
+
+    for role_name in config["teams"][team]:
+        gatherer = RoleGatherer(role_name, config["roles"][role_name])
         gatherer.highscore = HighScoreTracker()
+        try:
+            gatherer.highscore.comparison_value = list(team_data.get(role_name, {}).values())[0]
+        except IndexError:
+            pass
         gatherers.append(gatherer)
 
     attribute_order_is_set = False
@@ -147,7 +155,7 @@ def main(team: str, save, **kwargs):
     logging.info(f"\n-------------------{team}----------------------------")
     for gatherer in gatherers:
         logging.info(gatherer.highscore.output(gatherer.role_name, display_name))
-        print(gatherer.highscore.output(gatherer.role_name)[:290] + Style.RESET_ALL)
+        print(Style.RESET_ALL + gatherer.highscore.output(gatherer.role_name)[:280] + Style.RESET_ALL)
 
     if save:
         output = {}

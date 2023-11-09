@@ -29,7 +29,7 @@ selectable_files = {
 }
 
 config = RoleConfig.read_config()
-selectable_teams = config["teams"].keys()
+selectable_teams = list(config["teams"].keys())
 
 
 def execute_command():

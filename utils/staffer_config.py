@@ -4,7 +4,7 @@ from typing import List, Dict, Literal, Tuple, get_args
 from colorama import Fore, Style
 
 ATTRIBUTE_NAME = Literal[
-    'ada', 'ana d', 'att', 'def', 'det', 'fit', 'gkd', 'gkh', 'gks', 'judge a', 'judge p', 'jud sa', 'dis', 'men', 'mot', 'negotiating', 'mgm', 'phy', 'sps', 'tco', 'tac knw', 'tec', 'youth']
+    'ada', 'ana d', 'att', 'def', 'det', 'fit', 'gkd', 'gkh', 'gks', 'judge a', 'judge p', 'jud sa', 'dis', 'men', 'mot', 'negotiating', 'mgm', 'phy', 'sps', 'spc', 'tco', 'tac knw', 'tec', 'youth']
 
 attribute_names: Tuple[ATTRIBUTE_NAME, ...] = get_args(ATTRIBUTE_NAME)
 
@@ -32,7 +32,7 @@ class Attr:
 
 def short_name(name:str):
     name = name.split()
-    return f"{name[0][0]}. {name[-1]}"
+    return f"{name[0][:3]} {name[-1]}"
 
 @dataclass
 class RoleConfig:
