@@ -3,7 +3,7 @@ import json
 import logging
 from colorama import init as colorama_init, Style
 from collections import defaultdict
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 from utils.gatherer import RoleGatherer
 from utils.role_config import RoleConfig, POSITION_MAPPING, RoleConfigCache, POSITION_MAPPING_GK
@@ -15,6 +15,9 @@ parser.add_argument('-t', '--team', required=False, type=str, help='Key team to 
 parser.add_argument('-s', '--save', action='store_true')
 args: argparse.Namespace = parser.parse_args()
 
+
+HEADER_ORDER = Dict[int, Tuple[int, int]]
+ATTRIBUTES = Tuple[List[Optional[int]], List[Optional[int]],List[Optional[int]]]
 
 class Found(Exception):
     pass
@@ -29,6 +32,7 @@ class NotFound(Exception):
         super().__init__()
         print(f"not found {attribute_name}")
         self.attribute_name = attribute_name
+
 
 
 file_name = "players"
@@ -57,11 +61,11 @@ def main(team: str, save, **kwargs):
         gatherers.append(gatherer)
 
     attribute_order_is_set = False
-    attribute_order: Dict[int, Tuple[int, int]] = {}
-    attribute_gk_order: Dict[int, Tuple[int, int]] = {}
+    attribute_order: HEADER_ORDER = {}
+    attribute_gk_order: HEADER_ORDER = {}
 
-    attributes = ([], [], [])
-    attributes_gk = ([], [], [])
+    attributes: ATTRIBUTES = ([], [], [])
+    attributes_gk: ATTRIBUTES = ([], [], [])
     for i, row in enumerate(POSITION_MAPPING):
         for _ in row:
             attributes[i].append(None)
@@ -81,56 +85,48 @@ def main(team: str, save, **kwargs):
             data = data[5:-1]
 
             if not attribute_order_is_set:
-                for header_i, header in enumerate(data):
-                    header = header.strip()
-                    try:
-                        for x, row in enumerate(POSITION_MAPPING):
-                            for y, attribute_name in enumerate(row):
-                                if attribute_name == header:
-                                    attribute_order[header_i] = (x, y)
-                                    raise Found
-                    except Found:
-                        continue
-
-                for header_i, header in enumerate(data):
-                    header = header.strip()
-                    try:
-                        for x, row in enumerate(POSITION_MAPPING_GK):
-                            for y, attribute_name in enumerate(row):
-                                if attribute_name == header:
-                                    attribute_gk_order[header_i] = (x, y)
-                                    raise Found
-                    except Found:
-                        continue
+                set_headers(attribute_gk_order, attribute_order, data)
                 attribute_order_is_set = True
                 continue
 
-            try:
-                for i, attribute_value in enumerate(data):
+            one_attribute_not_found = False
+            one_attribute_not_exact = False
+            at_least_one_attribute = False
 
-                    position = attribute_order.get(i)
-                    gk_position = attribute_gk_order.get(i)
-                    if position is None and gk_position is None:
-                        continue
+            for i, attribute_value in enumerate(data):
 
-                    try:
-                        if "-" in attribute_value:
-                            attribute_value = attribute_value.split("-")
-                            attribute_value = (int(attribute_value[0]) + int(attribute_value[1])) / 2
-                            if not name.endswith("*"):
-                                name += "*"
-                        else:
-                            attribute_value = int(attribute_value)
-                    except ValueError:
-                        raise InvalidPlayer
+                position = attribute_order.get(i)
+                gk_position = attribute_gk_order.get(i)
+                if position is None and gk_position is None:
+                    continue
 
-                    if position:
-                        attributes[position[0]][position[1]] = attribute_value
-                    if gk_position:
-                        attributes_gk[gk_position[0]][gk_position[1]] = attribute_value
+                try:
+                    if "-" in attribute_value:
+                        attribute_value = attribute_value.split("-")
+                        attribute_value = (int(attribute_value[0]) + int(attribute_value[1])) / 2
+                        one_attribute_not_exact = True
+                    else:
+                        attribute_value = int(attribute_value)
+                    at_least_one_attribute = True
+                except ValueError:
+                    attribute_value = None
+                    one_attribute_not_found = True
 
-            except InvalidPlayer:
+                if position:
+                    attributes[position[0]][position[1]] = attribute_value
+                if gk_position:
+                    attributes_gk[gk_position[0]][gk_position[1]] = attribute_value
+
+            if not at_least_one_attribute:
                 continue
+
+            if one_attribute_not_found:
+                name += "**"
+                attributes = replace_nones_with_average(attributes)
+                attributes_gk = replace_nones_with_average(attributes_gk)
+            elif one_attribute_not_exact:
+                name += "*"
+
             max_score = -10000000
             for gatherer in gatherers:
                 gatherer.reset()
@@ -166,6 +162,49 @@ def main(team: str, save, **kwargs):
                 output[gatherer.role_name][name] = value
         with open("data/reader_output.json", "w") as f:
             json.dump(output, f)
+
+
+def set_headers(attribute_gk_order: Dict[int, Tuple[int, int]], attribute_order: Dict[int, Tuple[int, int]], data: List[str]):
+    for header_i, header in enumerate(data):
+        header = header.strip()
+        try:
+            for x, row in enumerate(POSITION_MAPPING):
+                for y, attribute_name in enumerate(row):
+                    if attribute_name == header:
+                        attribute_order[header_i] = (x, y)
+                        raise Found
+        except Found:
+            continue
+    for header_i, header in enumerate(data):
+        header = header.strip()
+        try:
+            for x, row in enumerate(POSITION_MAPPING_GK):
+                for y, attribute_name in enumerate(row):
+                    if attribute_name == header:
+                        attribute_gk_order[header_i] = (x, y)
+                        raise Found
+        except Found:
+            continue
+
+def replace_nones_with_average(_attributes: ATTRIBUTES) -> ATTRIBUTES:
+    value_sum = 0
+    value_count = 0
+    for attribute_row in _attributes:
+        for attribute in attribute_row:
+            if attribute is None:
+                continue
+            value_sum += attribute
+            value_count += 1
+    average = value_sum / value_count
+
+    return tuple(
+        [
+            average if attribute is None else attribute
+            for attribute in attribute_row
+        ]
+        for attribute_row in _attributes
+    )
+
 
 
 if __name__ == "__main__":
