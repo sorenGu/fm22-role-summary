@@ -168,18 +168,6 @@ class Gatherer:
     def add_to_row(self, row_i, attribute_number, value, importance=None):
         self.rows[row_i].add(importance, value, row_i, attribute_number)
 
-    def save_old_data(self, old_data):
-        with open("data/old_data.json", "w") as f:
-            json.dump(old_data, f)
-
-    def get_old_data(self):
-        try:
-            with open("data/old_data.json", "r") as f:
-                return json.load(f)
-        except (JSONDecodeError, FileNotFoundError):
-            pass
-        return {"data": []}
-
     def calculate_efficiency(self, main_processor):
         self.complete_data.efficiency = 5 * self.complete_data.average_value / main_processor.base_line_gatherer.complete_data.average_value
 

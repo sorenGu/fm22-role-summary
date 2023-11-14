@@ -82,7 +82,8 @@ def main(team: str, save, **kwargs):
 
             name = data[3].strip()
             age = data[4].strip()
-            data = data[5:-1]
+            positions = data[5].strip()
+            data = data[6:-1]
 
             if not attribute_order_is_set:
                 set_headers(attribute_gk_order, attribute_order, data)
@@ -92,6 +93,7 @@ def main(team: str, save, **kwargs):
             one_attribute_not_found = False
             one_attribute_not_exact = False
             at_least_one_attribute = False
+            is_goalkeeper = "GK" in positions
 
             for i, attribute_value in enumerate(data):
 
@@ -144,7 +146,7 @@ def main(team: str, save, **kwargs):
                     max_score = gatherer.complete_data.average_value
 
             for gatherer in gatherers:
-                if gatherer.complete_data.average_value / max_score < .97:
+                if gatherer.complete_data.average_value / max_score < .97 or (is_goalkeeper and one_attribute_not_found and "gk" not in gatherer.role_name.lower()):
                     continue
                 gatherer.highscore.try_add_score(f"{name} ({age})", gatherer.complete_data.average_value_repr)
 
