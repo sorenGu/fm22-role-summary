@@ -49,14 +49,13 @@ def display_name(name: Optional[str], score: float, highlighted_name=None):
 
 
 def display_name_with_color(name: Optional[str], score: float, highlighted_name=None):
-
     name = f"{name:>15}: " if name else ""
-    if highlighted_name in name:
+    if highlighted_name and highlighted_name in name:
         name = f"{Back.LIGHTBLACK_EX}{Style.BRIGHT}{name}{Style.RESET_ALL}"
     return f'{name}{get_text_color(score)}{score:6.2f}{Style.RESET_ALL}'
 
 
-def display_tracker(tracker: HighScoreTracker, name, colored=True, highlighted_name=None):
+def display_tracker(tracker: HighScoreTracker, name, colored=True, highlighted_name=None, compact_display=True):
     if colored:
         display_function = display_name_with_color
     else:
@@ -69,6 +68,8 @@ def display_tracker(tracker: HighScoreTracker, name, colored=True, highlighted_n
         name, score = data
         output += " " + display_function(name, score, highlighted_name) + " |"
         if i % 8 == 7:
+            if compact_display:
+                break
             output += "\n" + 13 * " "
     return output
 

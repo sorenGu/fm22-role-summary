@@ -115,17 +115,14 @@ def main(team: str, save, **kwargs):
             name += "*"
 
         for role_category, _attributes in attributes.items():
-            if attributes_extra["not_found"] and (role_category == "gk") == ("gk" in positions):
+            if attributes_extra["not_found"] and (role_category == "gk") != ("gk" in positions):
                 continue
             team_data.add_player_to_team(name, _attributes)
 
-    print(team_data.display_all_roles())
+    team_data.display_all_roles()
+
     if save:
-        output = {}
-        for role_name, tracker in team_data.data.items():
-            output[role_name] = {name.split(" ")[1]: value for name, value in tracker.serialize()}
-        with open("data/reader_output.json", "w") as f:
-            json.dump(output, f)
+        team_data.save_data_to_file("data/reader_output.json")
 
 
 def set_headers(attribute_mapping: AttributeMapping, header_row: List[str]):

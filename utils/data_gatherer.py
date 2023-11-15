@@ -29,6 +29,9 @@ class TeamData:
     CONFIG_FILE = "data/team_data.json"
 
     def __init__(self, team_config: TeamConfig):
+        self.full_data = self.read_data()
+        self.original_data = self.full_data.get(team_config.name, {})
+
         self.team_config = team_config
         self.data: Dict[str, HighScoreTracker] = {}
         self.init_data()
@@ -37,10 +40,18 @@ class TeamData:
         for role_name in self.team_config.roles_in_team:
             self.data[role_name] = HighScoreTracker(score_quantity=20)
 
+    @classmethod
+    def read_data(cls):
+        try:
+            with open(cls.CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except (JSONDecodeError, FileNotFoundError) as e:
+            return {}
+
     def set_comparison_values(self):
-        for tracker in self.data.values():
+        for role_name, tracker in self.data.items():
             try:
-                tracker.comparison_value = list(tracker.highscores.values())[0]
+                tracker.comparison_value = list(self.original_data.get(role_name, {}).values())[0]
             except IndexError:
                 continue
 
@@ -87,32 +98,25 @@ class TeamData:
                 print(display_role_values(role_name, normalized, (value / all_attribute_average) * 100, (value / max_value) * 100))
             self.data[role_name].try_add_score(player_name, normalized)
 
+    def save_data_to_file(self, file_path):
+        output = {}
+        for role_name, tracker in self.data.items():
+            output[role_name] = {name.split(" ")[1]: value for name, value in tracker.serialize().items()}
+        with open(file_path, "w") as f:
+            json.dump(output, f)
+
 
 class TeamDataWithTeam(TeamData):
-    def __init__(self, team_config: TeamConfig):
-        self.full_data = self.read_data()
-        self.previous_data = self.full_data.get(team_config.name, {})
-        super().__init__(team_config)
-
     def init_data(self):
         for role_name in self.team_config.roles_in_team:
-            if role_data := self.previous_data.get(role_name):
+            if role_data := self.original_data.get(role_name):
                 self.data[role_name] = HighScoreTracker(score_quantity=20, highscores=role_data)
             else:
                 self.data[role_name] = HighScoreTracker(score_quantity=20)
 
     def save_config(self):
         data = {name: data.serialize() for name, data in self.data.items()}
-        print(data)
         self.full_data[self.team_config.name] = data
 
         with open(self.CONFIG_FILE, "w") as f:
             json.dump(self.full_data, f)
-
-    @classmethod
-    def read_data(cls):
-        try:
-            with open(cls.CONFIG_FILE, "r") as f:
-                return json.load(f)
-        except (JSONDecodeError, FileNotFoundError) as e:
-            return {}
