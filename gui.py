@@ -1,13 +1,12 @@
-import subprocess
-import sys
 import tkinter as tk
 from tkinter import ttk
+
 import customtkinter as ctk
 
-from reader import main as reader_main
 from player import main as player_main
+from reader import main as reader_main
 from staff import main as staff_main
-from utils.role_config import RoleConfig
+from utils.role_config import RoleConfigCache
 
 
 class MockClass:
@@ -28,7 +27,7 @@ selectable_files = {
     "staff": staff_main
 }
 
-config = RoleConfig.read_config()
+config = RoleConfigCache.read_config()
 selectable_teams = list(config["teams"].keys())
 
 

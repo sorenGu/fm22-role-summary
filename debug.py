@@ -1,20 +1,17 @@
 import sys
 
-import colorama
 from PIL import Image
-from colorama import Fore, Style, Back
 
 from utils.config import DefaultConfig
 from utils.image_to_text import image_to_int, image_to_str
-from utils.role_config import get_relevant_pixel
-from utils.screenshot import Screenshotter, crop_from_config, crop_name_from_config
+from utils.role_config import get_relevant_pixel, ColorRoleGetter
+from utils.screenshot import ConfiguredScreenshotter
 
 
-def parse_image(x, y, show_image=False):
-    screenshotter = Screenshotter()
-    image = crop_from_config(DefaultConfig, x, y, screenshotter)
+def parse_image(image: Image.Image, config: ColorRoleGetter, show_image=False):
+
     try:
-        print(y, image_to_int(image), get_relevant_pixel(image))
+        print(image_to_int(image), get_relevant_pixel(image), config.get_importance(image))
     except Exception as e:
         print(f"failed to parse image {e}")
 
@@ -22,37 +19,32 @@ def parse_image(x, y, show_image=False):
         image.show()
 
 
-def parse_row(row_i):
-    for i in range(14 if row_i < 2 else 8):
-        parse_image(row_i, i)
-
-# class TeamData:
-#     def __init__(self):
-#         self.current_team_config = {"a": {}}
-#
-#     def add(self, player_name, position, value):
-#         self.current_team_config[position][player_name] = value
-#         self.current_team_config[position] = {
-#             pair[0]: pair[1]
-#             for pair in
-#             sorted(self.current_team_config[position].items(), key=lambda x: x[1], reverse=True)[:5]
-#         }
+def parse_all(screenshotter: ConfiguredScreenshotter, config, show: bool):
+    for attribute_image in screenshotter.iterate_attribute_images():
+        parse_image(attribute_image, config, show)
 
 
-def parse_name():
-    screenshotter = Screenshotter()
-    image = crop_name_from_config(DefaultConfig, screenshotter)
+def parse_name(screenshotter: ConfiguredScreenshotter):
+
+    image = screenshotter.get_name_image()
     image.show()
-    print(image_to_str(image))
+    print(f"Name is: {image_to_str(image)}")
 
 
 if __name__ == "__main__":
     from colorama import init as colorama_init
     colorama_init()
 
+    _screenshotter = ConfiguredScreenshotter(DefaultConfig)
     if len(sys.argv) == 1:
-        parse_name()
-    elif len(sys.argv) == 2:
-        parse_row(int(sys.argv[1]))
+        parse_name(_screenshotter)
+        sys.exit()
+
+    argument = sys.argv[1].lower()
+    config = ColorRoleGetter(DefaultConfig)
+    if argument in ["show", "all"]:
+        parse_all(_screenshotter, config, argument == "Show")
     else:
-        parse_image(*[int(x) for x in sys.argv[1:]], True)
+        attribute_number = int(sys.argv[1])
+        image = list(_screenshotter.iterate_attribute_images())[attribute_number]
+        parse_image(image, config, True)

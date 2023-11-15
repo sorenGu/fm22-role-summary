@@ -1,9 +1,9 @@
 from collections import defaultdict
-from typing import List, Dict
+from typing import Dict
 
-from utils.staffer_config import StaffAttributes, RoleConfig
+from utils.staffer_config import StaffAttributes
 from utils.staffer_roles import get_coach_roles, get_head_coach
-from utils.team_gatherer import TeamData
+
 
 file_name = "staff"
 input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manager 2024\\{file_name}.rtf"

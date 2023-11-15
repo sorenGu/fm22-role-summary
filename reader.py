@@ -1,14 +1,10 @@
 import argparse
 import json
 import logging
-from colorama import init as colorama_init, Style
-from collections import defaultdict
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Optional, Iterator, TypedDict
 
-from utils.gatherer import RoleGatherer
-from utils.role_config import RoleConfig, POSITION_MAPPING, RoleConfigCache, POSITION_MAPPING_GK
-from utils.team_gatherer import TeamData
-from utils.util import HighScoreTracker, display_name
+from utils.data_gatherer import TeamData
+from utils.role_config import POSITION_MAPPING, POSITION_MAPPING_GK, TeamConfig
 
 parser = argparse.ArgumentParser(description='Process command-line arguments.')
 parser.add_argument('-t', '--team', required=False, type=str, help='Key team to compare', default=None)
@@ -16,23 +12,20 @@ parser.add_argument('-s', '--save', action='store_true')
 args: argparse.Namespace = parser.parse_args()
 
 
-HEADER_ORDER = Dict[int, Tuple[int, int]]
-ATTRIBUTES = Tuple[List[Optional[int]], List[Optional[int]],List[Optional[int]]]
-
-class Found(Exception):
-    pass
+class AttributeMapping(TypedDict):
+    player: Dict[str, int]
+    gk: Dict[str, int]
 
 
-class InvalidPlayer(Exception):
-    pass
+class Attributes(TypedDict):
+    player: List[Optional[int]]
+    gk: List[Optional[int]]
 
 
-class NotFound(Exception):
-    def __init__(self, attribute_name):
-        super().__init__()
-        print(f"not found {attribute_name}")
-        self.attribute_name = attribute_name
-
+class AttributeExtra(TypedDict):
+    found: bool
+    guessed: bool
+    not_found: bool
 
 
 file_name = "players"
@@ -40,178 +33,115 @@ input_file = f"C:\\Users\\Soeren\\Documents\\Sports Interactive\\Football Manage
 
 logging.basicConfig(filename='data/reader_output.txt', level=logging.DEBUG, format='', encoding='utf-8')
 
-
-"|Rec|Inf|Name|Age|Acc|Aer|Agg|Agi|Ant|Bal|Bra|Cmd|Com|Cmp|Cnt|Cor|Cro|Dec|Det|Dri|Ecc|Fin|Fir|Fla|Fre|Han|Hea|Jum|Kic|Ldr|Lon|L Th|Mar|Nat|OtB|1v1|Pac|Pas|Pen|Pos|Pun|Ref|TRO|Sta|Str|Tck|Tea|Tec|Thr|Vis|Wor|"
-def main(team: str, save, **kwargs):
-    role_config: RoleConfig = RoleConfig()
-
-    RoleConfigCache.set_team(team)
-    gatherers: List[RoleGatherer] = []
-    config = role_config.read_config()
-
-    team_data = TeamData.read_config().get(team, {})
-
-    for role_name in config["teams"][team]:
-        gatherer = RoleGatherer(role_name, config["roles"][role_name])
-        gatherer.highscore = HighScoreTracker()
-        try:
-            gatherer.highscore.comparison_value = list(team_data.get(role_name, {}).values())[0]
-        except IndexError:
-            pass
-        gatherers.append(gatherer)
-
-    attribute_order_is_set = False
-    attribute_order: HEADER_ORDER = {}
-    attribute_gk_order: HEADER_ORDER = {}
-
-    attributes: ATTRIBUTES = ([], [], [])
-    attributes_gk: ATTRIBUTES = ([], [], [])
-    for i, row in enumerate(POSITION_MAPPING):
-        for _ in row:
-            attributes[i].append(None)
-
-    for i, row in enumerate(POSITION_MAPPING):
-        for _ in row:
-            attributes_gk[i].append(None)
-
+def iterate_lines() -> Iterator[List[str]]:
     with open(input_file, "r", encoding="utf8") as f:
         for line in f.readlines():
             data = line.split("|")
             if len(data) < 4:
                 continue
 
-            name = data[3].strip()
-            age = data[4].strip()
-            positions = data[5].strip()
-            data = data[6:-1]
+            yield data
 
-            if not attribute_order_is_set:
-                set_headers(attribute_gk_order, attribute_order, data)
-                attribute_order_is_set = True
+"|Rec|Inf|Name|Age|Acc|Aer|Agg|Agi|Ant|Bal|Bra|Cmd|Com|Cmp|Cnt|Cor|Cro|Dec|Det|Dri|Ecc|Fin|Fir|Fla|Fre|Han|Hea|Jum|Kic|Ldr|Lon|L Th|Mar|Nat|OtB|1v1|Pac|Pas|Pen|Pos|Pun|Ref|TRO|Sta|Str|Tck|Tea|Tec|Thr|Vis|Wor|"
+
+
+def get_player_attributes(data, header) -> tuple[Attributes, AttributeExtra]:
+    attributes: Attributes = {
+        "player": [None] * len(POSITION_MAPPING),
+        "gk": [None] * len(POSITION_MAPPING_GK),
+    }
+    attributes_extra: AttributeExtra = {
+        "found": False,
+        "guessed": False,
+        "not_found": False
+    }
+
+    for attribute_name, attribute_value in zip(header, data):
+        try:
+            if "-" in attribute_value:
+                attribute_value = attribute_value.split("-")
+                int_value = (int(attribute_value[0]) + int(attribute_value[1])) / 2
+                attributes_extra["guessed"] = True
+            else:
+                int_value = int(attribute_value)
+            attributes_extra["found"] = True
+        except ValueError:
+            attributes_extra["not_found"] = True
+            continue
+
+        for role_category, mapping in zip(attributes.keys(), (POSITION_MAPPING, POSITION_MAPPING_GK)):
+            try:
+                attribute_position = mapping.index(attribute_name)
+            except ValueError:
                 continue
 
-            one_attribute_not_found = False
-            one_attribute_not_exact = False
-            at_least_one_attribute = False
-            is_goalkeeper = "GK" in positions
+            attributes[role_category][attribute_position] = int_value
 
-            for i, attribute_value in enumerate(data):
+    return attributes, attributes_extra
 
-                position = attribute_order.get(i)
-                gk_position = attribute_gk_order.get(i)
-                if position is None and gk_position is None:
-                    continue
 
-                try:
-                    if "-" in attribute_value:
-                        attribute_value = attribute_value.split("-")
-                        attribute_value = (int(attribute_value[0]) + int(attribute_value[1])) / 2
-                        one_attribute_not_exact = True
-                    else:
-                        attribute_value = int(attribute_value)
-                    at_least_one_attribute = True
-                except ValueError:
-                    attribute_value = None
-                    one_attribute_not_found = True
+def main(team: str, save, **kwargs):
+    team_config = TeamConfig(team)
+    team_data = TeamData(team_config)
 
-                if position:
-                    attributes[position[0]][position[1]] = attribute_value
-                if gk_position:
-                    attributes_gk[gk_position[0]][gk_position[1]] = attribute_value
+    team_data.set_comparison_values()
 
-            if not at_least_one_attribute:
+    attribute_mapping_is_set = False
+    header = []
+
+    for data in iterate_lines():
+        age = data[4].strip()
+        name = data[3].strip().split(" ")
+        name = f"{name[0][:3]} {name[-1]} {age}"
+        positions = data[5].strip().lower()
+        data = data[6:-1]
+
+        if not attribute_mapping_is_set:
+            header = [x.strip() for x in data]
+            attribute_mapping_is_set = True
+            continue
+
+        attributes, attributes_extra = get_player_attributes(data, header)
+        attributes: Attributes
+        attributes_extra: AttributeExtra
+
+        if not attributes_extra["found"]:
+            continue
+
+        if attributes_extra["not_found"]:
+            name += "**"
+            attributes = {key: replace_nones_with_average(value) for key, value in attributes.items()}
+        elif attributes_extra["guessed"]:
+            name += "*"
+
+        for role_category, _attributes in attributes.items():
+            if attributes_extra["not_found"] and (role_category == "gk") == ("gk" in positions):
                 continue
+            team_data.add_player_to_team(name, _attributes)
 
-            if one_attribute_not_found:
-                name += "**"
-                attributes = replace_nones_with_average(attributes)
-                attributes_gk = replace_nones_with_average(attributes_gk)
-            elif one_attribute_not_exact:
-                name += "*"
-
-            max_score = -10000000
-            for gatherer in gatherers:
-                gatherer.reset()
-
-                is_goalkeeper_attributes = gatherer.role_name.startswith("GK")
-                attributes_for_gatherer = attributes if not is_goalkeeper_attributes else attributes_gk
-
-                for row_i, row in enumerate(attributes_for_gatherer):
-                    for attribute_number, value in enumerate(row):
-                        if is_goalkeeper_attributes and value is None and row_i == 0 and attribute_number == 13:
-                            continue
-                        gatherer.add_to_row(row_i, attribute_number, value)
-                gatherer.compile_complete_data()
-                if gatherer.complete_data.average_value > max_score:
-                    max_score = gatherer.complete_data.average_value
-
-            for gatherer in gatherers:
-                if gatherer.complete_data.average_value / max_score < .97 or (is_goalkeeper and one_attribute_not_found and "gk" not in gatherer.role_name.lower()):
-                    continue
-                gatherer.highscore.try_add_score(f"{name} ({age})", gatherer.complete_data.average_value_repr)
-
-    logging.info(f"\n-------------------{team}----------------------------")
-    for gatherer in gatherers:
-        logging.info(gatherer.highscore.output(gatherer.role_name, display_name))
-        print(Style.RESET_ALL + gatherer.highscore.output(gatherer.role_name)[:280] + Style.RESET_ALL)
-
+    print(team_data.display_all_roles())
     if save:
         output = {}
-        for gatherer in gatherers:
-            output[gatherer.role_name] = {}
-            for name, value in gatherer.highscore._highscores.items():
-                name = name.split(" ")[-2]
-                output[gatherer.role_name][name] = value
+        for role_name, tracker in team_data.data.items():
+            output[role_name] = {name.split(" ")[1]: value for name, value in tracker.serialize()}
         with open("data/reader_output.json", "w") as f:
             json.dump(output, f)
 
 
-def set_headers(attribute_gk_order: Dict[int, Tuple[int, int]], attribute_order: Dict[int, Tuple[int, int]], data: List[str]):
-    for header_i, header in enumerate(data):
-        header = header.strip()
-        try:
-            for x, row in enumerate(POSITION_MAPPING):
-                for y, attribute_name in enumerate(row):
-                    if attribute_name == header:
-                        attribute_order[header_i] = (x, y)
-                        raise Found
-        except Found:
-            continue
-    for header_i, header in enumerate(data):
-        header = header.strip()
-        try:
-            for x, row in enumerate(POSITION_MAPPING_GK):
-                for y, attribute_name in enumerate(row):
-                    if attribute_name == header:
-                        attribute_gk_order[header_i] = (x, y)
-                        raise Found
-        except Found:
-            continue
+def set_headers(attribute_mapping: AttributeMapping, header_row: List[str]):
+    for i, header in enumerate(header_row):
+        if header in POSITION_MAPPING:
+            attribute_mapping["player"][header] = i
+        if header in POSITION_MAPPING_GK:
+            attribute_mapping["gk"][header] = i
 
-def replace_nones_with_average(_attributes: ATTRIBUTES) -> ATTRIBUTES:
-    value_sum = 0
-    value_count = 0
-    for attribute_row in _attributes:
-        for attribute in attribute_row:
-            if attribute is None:
-                continue
-            value_sum += attribute
-            value_count += 1
-    average = value_sum / value_count
 
-    return tuple(
-        [
-            average if attribute is None else attribute
-            for attribute in attribute_row
-        ]
-        for attribute_row in _attributes
-    )
-
+def replace_nones_with_average(attributes: List[Optional[int]]) -> List[int]:
+    filtered_attributes = list(filter(None, attributes))
+    average = sum(filtered_attributes) / len(filtered_attributes)
+    return [x if x is not None else average for x in attributes]
 
 
 if __name__ == "__main__":
-    colorama_init()
-
-    team = args.team if args.team else "hsv_gyr"
-
+    team = args.team if args.team else "hsv_gold"
     main(team, args.save)

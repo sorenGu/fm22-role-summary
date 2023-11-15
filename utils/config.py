@@ -1,5 +1,3 @@
-elements_per_row = (14, 14, 8)
-
 
 class DefaultConfig:
     top = 452
@@ -7,6 +5,7 @@ class DefaultConfig:
     height = 13
     height_between = 16.5
     width = 51
+    padding = 8
 
     name_x = 438
     name_y = 10
