@@ -28,7 +28,11 @@ def main(team, save, **kwargs):
 
 
 def remove_player_from_team(player, team):
-    pass
+    team_config = TeamConfig(team)
+    team_data = TeamDataWithTeam(team_config)
+
+    team_data.remove_player(player)
+    team_data.save_config()
 
 
 if __name__ == '__main__':

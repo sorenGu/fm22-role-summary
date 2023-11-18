@@ -25,7 +25,7 @@ class Attributes(TypedDict):
 class AttributeExtra(TypedDict):
     found: bool
     guessed: bool
-    not_found: bool
+    not_found: int
 
 
 file_name = "players"
@@ -53,7 +53,7 @@ def get_player_attributes(data, header) -> tuple[Attributes, AttributeExtra]:
     attributes_extra: AttributeExtra = {
         "found": False,
         "guessed": False,
-        "not_found": False
+        "not_found": 0
     }
 
     for attribute_name, attribute_value in zip(header, data):
@@ -66,7 +66,7 @@ def get_player_attributes(data, header) -> tuple[Attributes, AttributeExtra]:
                 int_value = int(attribute_value)
             attributes_extra["found"] = True
         except ValueError:
-            attributes_extra["not_found"] = True
+            attributes_extra["not_found"] += 1
             continue
 
         for role_category, mapping in zip(attributes.keys(), (POSITION_MAPPING, POSITION_MAPPING_GK)):
@@ -110,7 +110,12 @@ def main(team: str, save, **kwargs):
 
         if attributes_extra["not_found"]:
             name += "**"
-            attributes = {key: replace_nones_with_average(value) for key, value in attributes.items()}
+            if attributes_extra["not_found"] > 5:
+                continue
+            try:
+                attributes = {key: replace_nones_with_average(value) for key, value in attributes.items()}
+            except ZeroDivisionError:
+                continue
         elif attributes_extra["guessed"]:
             name += "*"
 
@@ -135,7 +140,7 @@ def set_headers(attribute_mapping: AttributeMapping, header_row: List[str]):
 
 def replace_nones_with_average(attributes: List[Optional[int]]) -> List[int]:
     filtered_attributes = list(filter(None, attributes))
-    average = sum(filtered_attributes) / len(filtered_attributes)
+    average = .8 * sum(filtered_attributes) / len(filtered_attributes)
     return [x if x is not None else average for x in attributes]
 
 

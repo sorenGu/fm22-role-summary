@@ -19,4 +19,10 @@ class HighScoreTracker:
     def serialize(self) -> Dict:
         return self.highscores
 
+    def try_remove_item(self, player):
+        try:
+            del self.highscores[player]
+        except KeyError:
+            pass
+
 

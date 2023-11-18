@@ -38,11 +38,11 @@ POSITION_MAPPING_GK = (
 
 IMPORTANCE_STR: TypeAlias = Literal[None, "key", "preferable"]
 ROLE_CONFIG: TypeAlias = List[IMPORTANCE_STR]
+TeamConfigs: TypeAlias = Dict[str, List[str]]
 
 
 class ConfigData(TypedDict):
     roles: Dict[str, ROLE_CONFIG]
-    teams: Dict[str, List[str]]
 
 
 class RoleConfigCache:
@@ -63,7 +63,7 @@ class RoleConfigCache:
                     data: ConfigData = json.load(f)
             except (JSONDecodeError, FileNotFoundError) as e:
                 print(f"failed to read config {e}")
-                data: ConfigData = {"roles": {}, "teams": {}}
+                data: ConfigData = {"roles": {}}
 
             cls.FULL_DATA = data
 
@@ -113,11 +113,22 @@ class SaveRoleConfig(ColorRoleGetter):
 
 
 class TeamConfig:
+    FILE = "data/team_config.json"
     def __init__(self, team_name):
         self.name = team_name
         config = RoleConfigCache.read_config()
         self.role_configs = config["roles"]
         try:
-            self.roles_in_team = config["teams"][team_name]
+            self.roles_in_team = self.read_config()[team_name]
         except KeyError:
             raise ValueError(f"Team {team_name} not found in config file: {RoleConfigCache.FILE}")
+
+    @classmethod
+    def read_config(cls) -> TeamConfigs:
+        try:
+            with open(cls.FILE, "r") as f:
+                config: TeamConfigs = json.load(f)["teams"]
+        except (JSONDecodeError, FileNotFoundError) as e:
+            print(f"failed to read config {e}")
+            config: TeamConfigs = {}
+        return config

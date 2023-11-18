@@ -6,7 +6,7 @@ import customtkinter as ctk
 from player import main as player_main
 from reader import main as reader_main
 from staff import main as staff_main
-from utils.role_config import RoleConfigCache
+from utils.role_config import RoleConfigCache, TeamConfig
 
 
 class MockClass:
@@ -27,8 +27,8 @@ selectable_files = {
     "staff": staff_main
 }
 
-config = RoleConfigCache.read_config()
-selectable_teams = list(config["teams"].keys())
+config = TeamConfig.read_config()
+selectable_teams = list(config.keys())
 
 
 def execute_command():

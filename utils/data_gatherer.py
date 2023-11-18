@@ -59,7 +59,7 @@ class TeamData:
         for role_name, tracker in self.data.items():
             print(display_tracker(tracker, role_name, colored, highlighted_name))
 
-    def add_player_to_team(self, player_name, attributes, print_data=False):
+    def add_player_to_team(self, player_name, attributes, print_data=False, max_roles=3):
         attribute_count = len(attributes)
         if attribute_count == 35:
             is_goalkeeper = True
@@ -92,7 +92,8 @@ class TeamData:
             if average > max_value:
                 max_value = average
 
-        for role_name, value in list(player_tracker.highscores.items())[:3]:
+
+        for role_name, value in list(player_tracker.highscores.items())[:max_roles]:
             normalized = normalize_value(value)
             if print_data:
                 print(display_role_values(role_name, normalized, (value / all_attribute_average) * 100, (value / max_value) * 100))
@@ -120,3 +121,7 @@ class TeamDataWithTeam(TeamData):
 
         with open(self.CONFIG_FILE, "w") as f:
             json.dump(self.full_data, f)
+
+    def remove_player(self, player):
+        for role_name, tracker in self.data.items():
+            tracker.try_remove_item(player)
