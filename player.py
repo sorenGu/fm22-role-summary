@@ -1,4 +1,5 @@
 import argparse
+import datetime
 
 from utils.config import DefaultConfig
 from utils.data_gatherer import TeamDataWithTeam
@@ -12,6 +13,7 @@ parser.add_argument('-s', '--save', action='store_true')
 
 
 def main(team, save, **kwargs):
+    start = datetime.datetime.now()
     team_config = TeamConfig(team)
     team_data = TeamDataWithTeam(team_config)
     screenshotter = ConfiguredScreenshotter(DefaultConfig)
@@ -25,6 +27,8 @@ def main(team, save, **kwargs):
 
     if save:
         team_data.save_config()
+
+    print(f"Time: {datetime.datetime.now() - start}")
 
 
 def remove_player_from_team(player, team):
