@@ -1,4 +1,5 @@
-from typing import Type, Generator, Tuple, TypeAlias, Iterator, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Type, Tuple, TypeAlias, Iterator, List, Optional
 from warnings import warn
 
 import pyautogui
@@ -36,7 +37,7 @@ class ConfiguredScreenshotter(Screenshotter):
         super().__init__()
         self.config: Type[DefaultConfig] = screen_reader_config
 
-    def _iterate_attribute_positions(self, rows_per_column: Tuple[int, int, int] = (14, 14, 8)) -> Iterator[Rect]:
+    def iterate_attribute_positions(self, rows_per_column: Tuple[int, int, int] = (14, 14, 8)) -> Iterator[Rect]:
         for column in range(3):
             row_start = self.config.rows_starts[column]
             for row in range(rows_per_column[column]):
@@ -53,7 +54,7 @@ class ConfiguredScreenshotter(Screenshotter):
         else:
             rows_per_column = (14, 14, 8)
 
-        for rect in self._iterate_attribute_positions(rows_per_column):
+        for rect in self.iterate_attribute_positions(rows_per_column):
             yield self.get_crop(rect)
 
     def _get_name_rect(self) -> Rect:
@@ -91,22 +92,26 @@ def get_player_name(screenshotter):
         config="-c tessedit_char_blacklist=.\\\”:\\\"-,").split(" ")[-1].capitalize()
 
 
+def get_value(i, rect, screenshotter) -> Tuple[int, Optional[int]]:
+    attribute_image = screenshotter.get_crop(rect)
+    try:
+        value = image_to_int(attribute_image)
+    except ValueError:
+        value = None
+
+    return i, value
+
+
 def gather_attributes(screenshotter) -> List[int]:
-    attributes: List[int] = []
-    for i, attribute_image in enumerate(screenshotter.iterate_attribute_images()):
-        try:
-            value = image_to_int(attribute_image)
-        except ValueError:
-            value = None
+    attributes: List[int] = [None] * 36
+    with ThreadPoolExecutor() as executor:
+        results = [executor.submit(get_value, i, rect, screenshotter) for i, rect in enumerate(screenshotter.iterate_attribute_positions())]
+        for result in as_completed(results):
+            i, value = result.result()
+            attributes[i] = value
+    if attributes[13] is None:
+        del attributes[13]
+    if None in attributes:
+        raise ValueError("Failed to parse image to int")
 
-        if i == 13:  # attribute that is empty for gk's
-            if value is None:
-                continue
-            if value == 4 and input("Is this a goalkeeper? (y/n)") == "y":
-                continue
-        if value is None:
-            attribute_image.show()
-            raise ValueError("Failed to parse image to int")
-
-        attributes.append(value)
     return attributes
