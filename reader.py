@@ -83,12 +83,19 @@ def get_player_attributes(data, header) -> tuple[Attributes, AttributeExtra]:
 def main(team: str, save, **kwargs):
     team_config = TeamConfig(team)
     team_data = TeamData(team_config)
-
     team_data.set_comparison_values()
 
+    gather_data(team_data)
+
+    team_data.display_all_roles()
+
+    if save:
+        team_data.save_data_to_file("data/reader_output.json")
+
+
+def gather_data(team_data):
     attribute_mapping_is_set = False
     header = []
-
     for data in iterate_lines():
         age = data[4].strip()
         name = data[3].strip().split(" ")
@@ -123,11 +130,6 @@ def main(team: str, save, **kwargs):
             if attributes_extra["not_found"] and (role_category == "gk") != ("gk" in positions):
                 continue
             team_data.add_player_to_team(name, _attributes)
-
-    team_data.display_all_roles()
-
-    if save:
-        team_data.save_data_to_file("data/reader_output.json")
 
 
 def set_headers(attribute_mapping: AttributeMapping, header_row: List[str]):

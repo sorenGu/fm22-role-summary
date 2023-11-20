@@ -3,10 +3,11 @@ from tkinter import ttk
 
 import customtkinter as ctk
 
+from best_formation import main as formation_main
 from player import main as player_main
 from reader import main as reader_main
 from staff import main as staff_main
-from utils.role_config import RoleConfigCache, TeamConfig
+from utils.role_config import TeamConfig
 
 
 class MockClass:
@@ -24,7 +25,8 @@ class MockClass:
 selectable_files = {
     "player": player_main,
     "reader": reader_main,
-    "staff": staff_main
+    "staff": staff_main,
+    "best_formation": formation_main
 }
 
 config = TeamConfig.read_config()
