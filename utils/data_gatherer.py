@@ -125,3 +125,18 @@ class TeamDataWithTeam(TeamData):
     def remove_player(self, player):
         for role_name, tracker in self.data.items():
             tracker.try_remove_item(player)
+
+
+class TeamDataAllRoles(TeamData):
+    def init_data(self):
+        for role_name in self.team_config.role_configs.keys():
+            self.data[role_name] = HighScoreTracker(score_quantity=20)
+
+    def sort_by_value(self):
+        self.data = dict(sorted(self.data.items(), key=lambda x: x[1].get_value(0), reverse=True))
+
+    def display_all_roles(self, colored=True, highlighted_name=None):
+        for role_name, tracker in self.data.items():
+            if not tracker.highscores:
+                continue
+            print(display_tracker(tracker, role_name, colored, highlighted_name))

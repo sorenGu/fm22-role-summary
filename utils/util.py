@@ -25,4 +25,8 @@ class HighScoreTracker:
         except KeyError:
             pass
 
-
+    def get_value(self, position):
+        try:
+            return list(self.highscores.values())[position]
+        except IndexError:
+            return -500

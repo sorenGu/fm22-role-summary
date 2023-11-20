@@ -3,7 +3,7 @@ import json
 import logging
 from typing import List, Dict, Optional, Iterator, TypedDict
 
-from utils.data_gatherer import TeamData
+from utils.data_gatherer import TeamData, TeamDataAllRoles
 from utils.role_config import POSITION_MAPPING, POSITION_MAPPING_GK, TeamConfig
 
 parser = argparse.ArgumentParser(description='Process command-line arguments.')
@@ -91,6 +91,16 @@ def main(team: str, save, **kwargs):
 
     if save:
         team_data.save_data_to_file("data/reader_output.json")
+
+
+def gather_all_roles(team, **kwargs):
+    team_config = TeamConfig(team)
+    team_data = TeamDataAllRoles(team_config)
+
+    gather_data(team_data)
+    team_data.sort_by_value()
+
+    team_data.display_all_roles()
 
 
 def gather_data(team_data):

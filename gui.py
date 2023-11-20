@@ -5,7 +5,7 @@ import customtkinter as ctk
 
 from best_formation import main as formation_main
 from player import main as player_main
-from reader import main as reader_main
+from reader import main as reader_main, gather_all_roles
 from staff import main as staff_main
 from utils.role_config import TeamConfig
 
@@ -26,7 +26,8 @@ selectable_files = {
     "player": player_main,
     "reader": reader_main,
     "staff": staff_main,
-    "best_formation": formation_main
+    "best_formation": formation_main,
+    "all roles": gather_all_roles,
 }
 
 config = TeamConfig.read_config()
