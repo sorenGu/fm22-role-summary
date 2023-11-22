@@ -1,5 +1,7 @@
+import threading
 import tkinter as tk
 from tkinter import ttk
+from typing import Callable
 
 import customtkinter as ctk
 
@@ -9,72 +11,123 @@ from reader import main as reader_main, gather_all_roles
 from staff import main as staff_main
 from utils.role_config import TeamConfig
 
-
-class MockClass:
-
-    def __init__(self, return_value):
-        self.return_value = return_value
-
-    def __getattr__(self, attr):
-        try:
-            return object.__getattribute__(self, attr)
-        except AttributeError:
-            return self.return_value
-
-
-selectable_files = {
-    "player": player_main,
-    "reader": reader_main,
-    "staff": staff_main,
-    "best_formation": formation_main,
-    "all roles": gather_all_roles,
-    "all roles player": player_all_roles,
-}
-
 config = TeamConfig.read_config()
 selectable_teams = list(config.keys())
 
 
+def threaded(func):
+    def wrap(data: "Data", *args, **kwargs):
+        threading.Thread(func(data, *args, **kwargs))
+        data.save.set(False)
+        return
+    return wrap
+
+
+class Data:
+    def __init__(self):
+        self.save = tk.BooleanVar()
+        self.team = tk.StringVar()
+
+    @threaded
+    def player_in_team(self):
+        player_main(self.team.get(), self.save.get())
+
+    @threaded
+    def best_roles(self):
+        player_all_roles(self.team.get())
+
+    @threaded
+    def read_players(self):
+        reader_main(self.team.get(), self.save.get())
+
+    @threaded
+    def read_all_roles(self):
+        gather_all_roles(self.team.get())
+
+    @threaded
+    def best_formation(self):
+        formation_main(self.team.get())
+
+    @threaded
+    def staff(self):
+        staff_main()
+
+
 def execute_command():
-    selected_file = file_var.get()
-    selected_team = team_var.get()
-    args = {
-        "team": selected_team,
-        "save": save_var.get(),
-        "args": MockClass(False)
-    }
+    # selected_file = file_var.get()
+    # selected_team = team_var.get()
+    # args = {
+    #     "team": selected_team,
+    #     "save": save_var.get(),
+    #     "args": MockClass(False)
+    # }
 
-    print("-------", selected_file, " for ", selected_team, "---------")
-    selectable_files[selected_file](**args)
+    # print("-------", selected_file, " for ", selected_team, "---------")
+    # selectable_files[selected_file](**args)
+    print("a")
 
 
-app = ctk.CTk()
-ctk.set_appearance_mode("System")
-ctk.set_default_color_theme("blue")
-app.attributes('-topmost', True)
-app.title("FM23 Utils")
+def create_app():
+    app = ctk.CTk()
+    ctk.set_appearance_mode("System")
+    ctk.set_default_color_theme("blue")
+    app.attributes('-topmost', True)
+    app.title("FM23 Utils")
 
-# Create a button row at the top
-button_frame = ctk.CTkFrame(app)
-button_frame.pack(side=tk.TOP, fill=tk.X)
+    data = Data()
 
-file_var = tk.StringVar()
-file_selection = ttk.Combobox(button_frame, textvariable=file_var, values=list(selectable_files.keys()))
-file_selection.current(0)
-file_selection.pack(side=tk.LEFT, padx=10)
+    # Create a button row at the top
+    data_frame = create_data_frame(app, data)
+    data_frame.pack(side=tk.TOP, fill=tk.X)
 
-team_var = tk.StringVar()
-team_selection = ttk.Combobox(button_frame, textvariable=team_var, values=selectable_teams)
-team_selection.current(0)
-team_selection.pack(side=tk.LEFT, padx=10)
+    reader_frame = get_reader_frame(app, data)
+    reader_frame.pack(side=tk.LEFT, fill='x')
 
-save_var = tk.BooleanVar()
-save_selection = ttk.Checkbutton(button_frame, text="Save", variable=save_var, onvalue = True, offvalue = False)
-save_selection.pack(side=tk.LEFT, padx=10)
+    parser_frame = get_parser_frame(app, data)
+    parser_frame.pack(side=tk.RIGHT, fill='x')
 
-add_button = tk.Button(button_frame, text="Execute", command=execute_command)
-add_button.pack(side=tk.RIGHT, padx=10)
+    return app
+
+
+def get_parser_frame(app: ctk.CTk, data: Data) -> ctk.CTkFrame:
+    frame = ctk.CTkFrame(app)
+    button = tk.Label(frame, text="From File", background="antiquewhite3")
+    button.pack(pady=10, expand=True, fill='x')
+    for text, command in (
+            ("Players in Team", data.read_players),
+            ("Best Roles", data.read_all_roles),
+            ("Best Formation", data.best_formation),
+            ("Staff evaluation", data.staff)
+    ):
+        pack_button(frame, text, command)
+    return frame
+
+
+def get_reader_frame(app: ctk.CTk, data: Data) -> ctk.CTkFrame:
+    frame = ctk.CTkFrame(app)
+    button = tk.Label(frame, text="From Screenshot", background="antiquewhite3")
+    button.pack(pady=10, expand=True, fill='x')
+    for text, command in (("Player in Team", data.player_in_team), ("Best Roles", data.best_roles)):
+        pack_button(frame, text, command)
+    return frame
+
+
+def pack_button(frame: ctk.CTkFrame, text: str, command: Callable):
+    button = tk.Button(frame, text=text, command=command, background="antiquewhite4")
+    button.pack(pady=10)
+
+
+def create_data_frame(app: ctk.CTk, data: Data) -> ctk.CTkFrame:
+    data_frame = ctk.CTkFrame(app)
+
+    team_selection = ttk.Combobox(data_frame, textvariable=data.team, values=selectable_teams)
+    team_selection.pack(side=tk.LEFT, padx=10)
+    data.team.set(selectable_teams[0])
+    save_selection = ttk.Checkbutton(data_frame, text="Save", variable=data.save, onvalue=True, offvalue=False)
+    save_selection.pack(side=tk.LEFT, padx=10)
+
+    return data_frame
 
 
 if __name__ == "__main__":
-    app.mainloop()
+    create_app().mainloop()
