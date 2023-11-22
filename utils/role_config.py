@@ -47,7 +47,7 @@ class ConfigData(TypedDict):
 
 class RoleConfigCache:
     FULL_DATA: ConfigData = None
-    FILE = "data/role_config.json"
+    FILE = "config/role_config.json"
 
     @classmethod
     def save_config(cls, config):
@@ -113,7 +113,8 @@ class SaveRoleConfig(ColorRoleGetter):
 
 
 class TeamConfig:
-    FILE = "data/team_config.json"
+    FILE = "data/team_formations.json"
+
     def __init__(self, team_name):
         self.name = team_name
         config = RoleConfigCache.read_config()
@@ -127,7 +128,7 @@ class TeamConfig:
     def read_config(cls) -> TeamConfigs:
         try:
             with open(cls.FILE, "r") as f:
-                config: TeamConfigs = json.load(f)["teams"]
+                config: TeamConfigs = json.load(f)
         except (JSONDecodeError, FileNotFoundError) as e:
             print(f"failed to read config {e}")
             config: TeamConfigs = {}

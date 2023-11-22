@@ -1,0 +1,98 @@
+{
+  "hsv_gold": [
+    "GK_SK_DE",
+    "DC_BPD_DE",
+    "DW_WB_AT",
+    "DMC_DM_SU",
+    "DMC_DLP_SU",
+    "AMW_IF_SU",
+    "AMW_W_AT",
+    "AMC_AM_AT",
+    "ST_AF_AT"
+  ],
+  "hsv_wing_def": [
+    "GK_SK_DE",
+    "DC_BPD_DE",
+    "DW_WB_AT",
+    "DW_IWB_SU",
+    "DMC_BMW_DE",
+    "DMC_VOL_AT",
+    "AMW_W_AT",
+    "ST_AF_AT",
+    "ST_TF_SU"
+  ],
+  "hsv_cameron": [
+    "GK_SK_DE",
+    "DC_BPD_DE",
+    "DW_WB_AT",
+    "DMC_DM_SU",
+    "AMW_IF_SU",
+    "AMC_AM_AT",
+    "ST_AF_AT"
+  ],
+  "truro_sprint": [
+    "GK_SK_DE",
+    "DC_BPD_DE",
+    "DC_BPD_DE",
+    "DC_BPD_DE",
+    "DMC_BMW_DE",
+    "DMW_WB_SU",
+    "DMW_WB_AT",
+    "MC_AP_AT",
+    "AMC_SS_AT",
+    "ST_AF_AT",
+    "ST_AF_AT"
+  ],
+  "bromly_3421": [
+    "GK_SK_SU",
+    "DC_BPD_DE",
+    "DC_WCB_DE",
+    "DC_WCB_DE",
+    "DMC_DLP_DE",
+    "DMC_VOL_AT",
+    "DMW_WB_SU",
+    "DMW_WB_SU",
+    "AMW_IF_AT",
+    "AMW_IF_AT",
+    "ST_CF_SU"
+  ],
+  "watford_3421": [
+    "GK_SK_SU",
+    "DC_BPD_DE",
+    "DC_WCB_DE",
+    "DC_WCB_DE",
+    "DMC_DLP_DE",
+    "DMC_VOL_AT",
+    "DMW_WB_SU",
+    "DMW_WB_SU",
+    "AMW_IF_AT",
+    "AMW_IF_AT",
+    "ST_CF_SU"
+  ],
+  "watford_Cher": [
+    "GK_SK_DE",
+    "DC_BPD_DE",
+    "DC_BPD_DE",
+    "DC_LIB_SU",
+    "DMW_CWB_AT",
+    "DMW_CWB_AT",
+    "DMC_VOL_AT",
+    "DMC_VOL_AT",
+    "ST_AF_AT",
+    "ST_AF_AT",
+    "ST_TF_SU"
+  ],
+  "watford_inter": [
+    "GK_GK_DE",
+    "DC_CD_DE",
+    "DC_BPD_DE",
+    "DC_WCB_AT",
+    "DMW_WB_SU",
+    "DMW_CWB_AT",
+    "DMC_REG_SU",
+    "MC_CM_SU",
+    "MC_BTB_SU",
+    "ST_DLF_AT",
+    "ST_AF_AT"
+  ]
+}
