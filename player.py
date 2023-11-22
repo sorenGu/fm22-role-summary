@@ -2,7 +2,7 @@ import argparse
 import datetime
 
 from utils.config import DefaultConfig
-from utils.data_gatherer import TeamDataWithTeam
+from utils.data_gatherer import TeamDataWithTeam, TeamDataAllRoles, PlayerDataAllRoles
 from utils.role_config import TeamConfig
 from utils.screenshot import ConfiguredScreenshotter, get_player_name, gather_attributes
 
@@ -16,19 +16,34 @@ def main(team, save, **kwargs):
     start = datetime.datetime.now()
     team_config = TeamConfig(team)
     team_data = TeamDataWithTeam(team_config)
-    screenshotter = ConfiguredScreenshotter(DefaultConfig)
-
-    player_name = get_player_name(screenshotter)
-    attributes = gather_attributes(screenshotter)
-
-    team_data.add_player_to_team(player_name, attributes, print_data=True)
+    player_name = read_data(team_data)
 
     team_data.display_all_roles(highlighted_name=player_name)
-
     if save:
         team_data.save_config()
 
     print(f"Time: {datetime.datetime.now() - start}")
+
+
+def player_all_roles(team, **kwargs):
+    start = datetime.datetime.now()
+    team_config = TeamConfig(team)
+    team_data = PlayerDataAllRoles(team_config)
+
+    read_data(team_data, print_data=False)
+    team_data.sort_by_value()
+    team_data.display_all_roles()
+
+
+    print(f"Time: {datetime.datetime.now() - start}")
+
+
+def read_data(team_data, print_data=True):
+    screenshotter = ConfiguredScreenshotter(DefaultConfig)
+    player_name = get_player_name(screenshotter)
+    attributes = gather_attributes(screenshotter)
+    team_data.add_player_to_team(player_name, attributes, print_data=print_data)
+    return player_name
 
 
 def remove_player_from_team(player, team):

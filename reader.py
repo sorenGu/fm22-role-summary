@@ -90,7 +90,7 @@ def main(team: str, save, **kwargs):
     team_data.display_all_roles()
 
     if save:
-        team_data.save_data_to_file("data/reader_output.json")
+        team_data.save_config()
 
 
 def gather_all_roles(team, **kwargs):

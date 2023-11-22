@@ -26,6 +26,9 @@ def get_text_color(value):
     return "".join(str(x) for x in (Fore.MAGENTA, Style.BRIGHT))
 
 
+def color_display_attribute_value(score: float, format="6.2f"):
+    return f"{get_text_color(score)}{score:{format}}{Style.RESET_ALL}"
+
 def get_text_color_small(value):
     default = "".join(str(x) for x in (Fore.MAGENTA, Style.BRIGHT))
     for max_value, style in (
@@ -52,7 +55,8 @@ def display_name_with_color(name: Optional[str], score: float, highlighted_name=
     name = f"{name:>15}: " if name else ""
     if highlighted_name and highlighted_name in name:
         name = f"{Back.LIGHTBLACK_EX}{Style.BRIGHT}{name}{Style.RESET_ALL}"
-    return f'{name}{get_text_color(score)}{score:6.2f}{Style.RESET_ALL}'
+
+    return f'{name}{color_display_attribute_value(score)}'
 
 
 def display_tracker(tracker: HighScoreTracker, name, colored=True, highlighted_name=None, compact_display=True):

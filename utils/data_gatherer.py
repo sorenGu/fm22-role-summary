@@ -27,6 +27,7 @@ def normalize_value(value):
 
 class TeamData:
     CONFIG_FILE = "data/team_data.json"
+    MAX_ROLES = 3
 
     def __init__(self, team_config: TeamConfig):
         self.full_data = self.read_data()
@@ -59,7 +60,7 @@ class TeamData:
         for role_name, tracker in self.data.items():
             print(display_tracker(tracker, role_name, colored, highlighted_name))
 
-    def add_player_to_team(self, player_name, attributes, print_data=False, max_roles=3):
+    def add_player_to_team(self, player_name, attributes, print_data=False):
         attribute_count = len(attributes)
         if attribute_count == 35:
             is_goalkeeper = True
@@ -92,8 +93,7 @@ class TeamData:
             if average > max_value:
                 max_value = average
 
-
-        for role_name, value in list(player_tracker.highscores.items())[:max_roles]:
+        for role_name, value in list(player_tracker.highscores.items())[:self.MAX_ROLES]:
             normalized = normalize_value(value)
             if print_data:
                 print(display_role_values(role_name, normalized, (value / all_attribute_average) * 100, (value / max_value) * 100))
@@ -106,6 +106,16 @@ class TeamData:
         with open(file_path, "w") as f:
             json.dump(output, f)
 
+    def save_config(self):
+        output = {}
+        for role_name, tracker in self.data.items():
+            output[role_name] = {name.split(" ")[1]: value for name, value in tracker.serialize().items()}
+
+        self.full_data[self.team_config.name] = output
+
+        with open(self.CONFIG_FILE, "w") as f:
+            json.dump(self.full_data, f)
+
 
 class TeamDataWithTeam(TeamData):
     def init_data(self):
@@ -115,6 +125,11 @@ class TeamDataWithTeam(TeamData):
             else:
                 self.data[role_name] = HighScoreTracker(score_quantity=20)
 
+    def remove_player(self, player):
+        for role_name, tracker in self.data.items():
+            tracker.try_remove_item(player)
+
+
     def save_config(self):
         data = {name: data.serialize() for name, data in self.data.items()}
         self.full_data[self.team_config.name] = data
@@ -122,21 +137,22 @@ class TeamDataWithTeam(TeamData):
         with open(self.CONFIG_FILE, "w") as f:
             json.dump(self.full_data, f)
 
-    def remove_player(self, player):
-        for role_name, tracker in self.data.items():
-            tracker.try_remove_item(player)
-
-
 class TeamDataAllRoles(TeamData):
+    MAX_ROLES = 1
+
     def init_data(self):
         for role_name in self.team_config.role_configs.keys():
             self.data[role_name] = HighScoreTracker(score_quantity=20)
 
     def sort_by_value(self):
-        self.data = dict(sorted(self.data.items(), key=lambda x: x[1].get_value(0), reverse=True))
+        self.data = dict(sorted(list(self.data.items()), key=lambda x: x[1].get_value(0), reverse=True)[:20])
 
     def display_all_roles(self, colored=True, highlighted_name=None):
         for role_name, tracker in self.data.items():
             if not tracker.highscores:
                 continue
             print(display_tracker(tracker, role_name, colored, highlighted_name))
+
+
+class PlayerDataAllRoles(TeamDataAllRoles):
+    MAX_ROLES = 200

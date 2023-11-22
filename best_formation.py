@@ -4,6 +4,7 @@ import logging
 from pprint import pprint
 from typing import List, Dict, Optional, Iterator, TypedDict
 
+from utils.console_display import color_display_attribute_value
 from utils.data_gatherer import TeamData
 from utils.role_config import POSITION_MAPPING, POSITION_MAPPING_GK, TeamConfig
 
@@ -42,10 +43,12 @@ def main(team: str, **kwargs):
     team_data = TeamData(team_config)
 
     best_constellation = find_best_constellation(team_config.roles_in_team, team_data.original_data, [], depth=1)
+    print(f"Value: {best_constellation[1]}")
     for position, player in zip(team_config.roles_in_team, best_constellation[0]):
-        print(f"{position}: {player}")
+        score = team_data.original_data[position][player]
+        print(f"{position}: {player} {color_display_attribute_value(score)}")
 
 
 if __name__ == "__main__":
-    team = args.team if args.team else "bromly_3421"
-    main(team)
+    _team = args.team if args.team else "bromly_3421"
+    main(_team)
