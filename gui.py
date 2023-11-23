@@ -17,6 +17,7 @@ selectable_teams = list(config.keys())
 
 def threaded(func):
     def wrap(data: "Data", *args, **kwargs):
+        print(f"---------------- {func.__name__} ----------------")
         threading.Thread(func(data, *args, **kwargs))
         data.save.set(False)
         return
@@ -30,23 +31,23 @@ class Data:
 
     @threaded
     def player_in_team(self):
-        player_main(self.team.get(), self.save.get())
+        player_main(team=self.team.get(), save=self.save.get())
 
     @threaded
     def best_roles(self):
-        player_all_roles(self.team.get())
+        player_all_roles(team=self.team.get())
 
     @threaded
     def read_players(self):
-        reader_main(self.team.get(), self.save.get())
+        reader_main(team=self.team.get(), save=self.save.get())
 
     @threaded
     def read_all_roles(self):
-        gather_all_roles(self.team.get())
+        gather_all_roles(team=self.team.get())
 
     @threaded
     def best_formation(self):
-        formation_main(self.team.get())
+        formation_main(team=self.team.get())
 
     @threaded
     def staff(self):
